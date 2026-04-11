@@ -331,7 +331,6 @@
     return cuota;
   }
 
-  // ✅ FUNCIÓN MODIFICADA: SOLO MUESTRA LOS MESES, SIN AÑOS
   function formatPlazoConAnio(meses) {
     return `${meses} MESES`;
   }
@@ -407,8 +406,19 @@
     renderizarTabla();
   });
 
+  // Limpiar Service Worker viejo y registrar el nuevo
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js").catch(e => console.log("SW no registrado"));
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+      for(let registration of registrations) {
+        registration.unregister();
+        console.log('Service Worker viejo desregistrado');
+      }
+      navigator.serviceWorker.register("service-worker.js").then(function(reg) {
+        console.log('Service Worker registrado correctamente');
+      }).catch(function(err) {
+        console.log('Error al registrar SW:', err);
+      });
+    });
   }
 
   window.addEventListener("resize", () => {
