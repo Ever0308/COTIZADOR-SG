@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f4c81">
+  <title>COTIZADOR SG | Tabla de Financiamiento</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(145deg, #e9f0f9 0%, #dde5f0 100%);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+      padding: 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .app-wrapper {
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    #areaCompartir {
+      background: #ffffff;
+      border-radius: 2rem;
+      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0,0,0,0.05);
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .header-modern {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem 2rem 0.75rem 2rem;
+      flex-wrap: wrap;
+      background: white;
+      border-bottom: 1px solid #eef2fa;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .logo {
+      width: 58px;
+      height: auto;
+      object-fit: contain;
+      display: block;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+    }
+
+    .header-modern h1 {
+      font-size: 1.7rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #0f4c81 0%, #1e6aa5 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: -0.3px;
+    }
+
+    .card-form-modern {
+      background: #10436f;
+      margin: 1.5rem 1.8rem;
+      padding: 1.5rem 1.8rem;
+      border-radius: 1.8rem;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s;
+    }
+
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      align-items: flex-end;
+    }
+
+    .input-group {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .card-form-modern label {
+      display: block;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 0.5rem;
+    }
+
+    .field-modern, .select-modern {
+      width: 100%;
+      padding: 0.9rem 1rem;
+      border-radius: 1.2rem;
+      border: none;
+      background: white;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #0a2b44;
+      outline: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .field-modern:focus, .select-modern:focus {
+      box-shadow: 0 0 0 3px rgba(255,215,0,0.5);
+      transform: scale(1.01);
+    }
+
+    .table-container {
+      padding: 0 1.8rem 1.8rem 1.8rem;
+      overflow-x: auto;
+      width: 100%;
+    }
+
+    .financing-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: rgb(255, 255, 255);
+      border-radius: 1.4rem;
+      overflow: hidden;
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.03);
+      font-size: 0.9rem;
+    }
+
+    .financing-table thead tr {
+      background: #10436f;
+    }
+
+    .financing-table th {
+      text-align: center;
+      padding: 1rem 1rem;
+      font-weight: 700;
+      color: #ffffff;
+      font-size: 0.85rem;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .financing-table td {
+      padding: 1rem 1rem;
+      border-bottom: 1px solid #eff3f8;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .financing-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .financing-table tr:hover td {
+      background-color: #fafcff;
+    }
+
+    /* Colores personalizados por columna */
+    .col-plazo {
+      color: #0f4c81;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .col-cuota {
+      color: #059669;
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .col-interes {
+      color: #ea470c;
+      font-weight: 600;
+    }
+
+    .col-total {
+      color: #361177;
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
+
+    .footer-text {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #6c86a3;
+      background: #f9fbfe;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #eef2fa;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+    }
+
+    @media (max-width: 780px) {
+      body {
+        padding: 1rem;
+      }
+      .financing-table th, .financing-table td {
+        padding: 0.75rem 0.65rem;
+        font-size: 0.75rem;
+      }
+      .card-form-modern {
+        margin: 1rem 1.2rem;
+        padding: 1.2rem;
+      }
+      .table-container {
+        padding: 0 1.2rem 1.2rem 1.2rem;
+      }
+      .header-modern h1 {
+        font-size: 1.3rem;
+      }
+      .logo {
+        width: 46px;
+      }
+      .form-row {
+        gap: 0.8rem;
+      }
+      .col-plazo, .col-cuota, .col-interes, .col-total {
+        font-size: 0.7rem;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .financing-table th, .financing-table td {
+        padding: 0.65rem 0.5rem;
+        font-size: 0.7rem;
+      }
+      .financing-table th {
+        font-size: 0.7rem;
+      }
+      .field-modern, .select-modern {
+        padding: 0.7rem 0.9rem;
+        font-size: 0.9rem;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .financing-table th, .financing-table td {
+        padding: 1.2rem 1.4rem;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app-wrapper">
+  <div id="areaCompartir">
+    <div class="header-modern">
+      <div class="logo-area">
+        <img src="logo.png" class="logo" alt="Logo San Gaspar" onerror="this.src='https://placehold.co/60x60?text=SG';">
+        <h1>COTIZADOR SG</h1>
+      </div>
+    </div>
+
+    <div class="card-form-modern">
+      <div class="form-row">
+        <div class="input-group">
+          <label>💰 MONTO A FINANCIAR</label>
+          <input type="text" id="monto" class="field-modern" placeholder="Ej: 1,000" inputmode="decimal" value="">
+        </div>
+        <div class="input-group">
+          <label>📊 TASA DE INTERÉS (MENSUAL)</label>
+          <select id="tasa" class="select-modern">
+            <option value="24">2.00% PRINCIPAL</option>
+            <option value="20">1.67% DEPOSITARIA</option>
+            <option value="20">1.67% MASVI</option>
+            <option value="27.60">2.30% INMEDIATO</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="financing-table" id="tablaResultados">
+        <thead>
+          <tr>
+            <th>PLAZO</th>
+            <th>CUOTA MENSUAL</th>
+            <th>INTERÉS TOTAL</th>
+            <th>TOTAL A PAGAR</th>
+          </tr>
+        </thead>
+        <tbody id="tablaBody">
+          <tr><td colspan="4" style="text-align:center; padding: 2rem; color: #6c86a3;">💰 Ingrese un monto para ver las opciones de financiamiento</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer-text">
+      COTIZADOR SG v2.1 · Tasas referenciales · Ever Canay
+    </div>
+  </div>
+</div>
+
+<script>
+  const plazosMeses = [12, 18, 24, 36, 48, 60, 72, 84, 96, 108, 120];
+
+  function formatMoney(valor) {
+    if (isNaN(valor) || valor === null) return "Q 0.00";
+    return "Q " + valor.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function cleanNumber(value) {
+    if (!value || value === "") return 0;
+    let limpio = String(value).replace(/Q/gi, '').replace(/,/g, '').trim();
+    let numero = parseFloat(limpio);
+    return isNaN(numero) ? 0 : numero;
+  }
+
+  function calcularCuotaMensual(monto, tasaAnualPorcentaje, meses) {
+    if (monto <= 0 || meses <= 0) return 0;
+    const tasaMensual = (tasaAnualPorcentaje / 100) / 12;
+    if (tasaMensual === 0) return monto / meses;
+    const factor = Math.pow(1 + tasaMensual, meses);
+    const cuota = monto * (tasaMensual * factor) / (factor - 1);
+    return cuota;
+  }
+
+  // ✅ FUNCIÓN MODIFICADA: SOLO MUESTRA LOS MESES, SIN AÑOS
+  function formatPlazoConAnio(meses) {
+    return `${meses} MESES`;
+  }
+
+  function renderizarTabla() {
+    const montoInput = document.getElementById("monto");
+    const tasaSelect = document.getElementById("tasa");
+    const tbody = document.getElementById("tablaBody");
+
+    let montoRaw = cleanNumber(montoInput.value);
+    
+    if (montoRaw === 0 || montoInput.value === "") {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem; color: #6c86a3;">💰 Ingrese un monto para ver las opciones de financiamiento</td></tr>`;
+      return;
+    }
+
+    const tasaMensualPorcentaje = parseFloat(tasaSelect.value);
+    if (isNaN(tasaMensualPorcentaje)) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 2rem;">Error en la tasa seleccionada</td></tr>`;
+      return;
+    }
+
+    let filasHtml = "";
+
+    for (let meses of plazosMeses) {
+      const cuota = calcularCuotaMensual(montoRaw, tasaMensualPorcentaje, meses);
+      if (isNaN(cuota) || !isFinite(cuota)) continue;
+
+      const totalPagar = cuota * meses;
+      const interesTotal = totalPagar - montoRaw;
+      const plazoTexto = formatPlazoConAnio(meses);
+      
+      filasHtml += `
+        <tr>
+          <td class="col-plazo">${plazoTexto}</td>
+          <td class="col-cuota">${formatMoney(cuota)}</td>
+          <td class="col-interes">${formatMoney(interesTotal)}</td>
+          <td class="col-total">${formatMoney(totalPagar)}</td>
+        </tr>
+      `;
+    }
+
+    if (filasHtml === "") {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 2rem;">No se pudieron calcular los plazos</td></tr>`;
+    } else {
+      tbody.innerHTML = filasHtml;
+    }
+  }
+
+  const montoField = document.getElementById("monto");
+  const tasaDropdown = document.getElementById("tasa");
+
+  montoField.addEventListener("input", () => {
+    renderizarTabla();
+  });
+
+  montoField.addEventListener("blur", () => {
+    let valorNumerico = cleanNumber(montoField.value);
+    if (valorNumerico > 0) {
+      montoField.value = formatMoney(valorNumerico);
+    } else if (valorNumerico === 0 || montoField.value === "") {
+      montoField.value = "";
+    }
+    renderizarTabla();
+  });
+
+  tasaDropdown.addEventListener("change", () => {
+    renderizarTabla();
+  });
+
+  window.addEventListener("DOMContentLoaded", () => {
+    montoField.value = "";
+    renderizarTabla();
+  });
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js").catch(e => console.log("SW no registrado"));
+  }
+
+  window.addEventListener("resize", () => {
+    renderizarTabla();
+  });
+</script>
+</body>
+</html>
