@@ -2,276 +2,388 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0f4c81">
-  <title>COTIZADOR SG | Tabla de Financiamiento</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#1a56db">
+  <title>San Gaspar | Crédito</title>
   <link rel="manifest" href="manifest.json">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --primary-50: #eff6ff; --primary-100: #dbeafe; --primary-200: #bfdbfe;
+      --primary-400: #186dd5; --primary-500: #1651b1; --primary-600: #0d368d;
+      --primary-700: #0d349e; --primary-800: #071645; --primary-900: #05143d;
+      --success-500: #197e3e; --success-600: #0d5b29; --success-700: #065f46;
+      --warning-600: #d97706; --danger-600: #dc2626;
+      --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb;
+      --gray-400: #9ca3af; --gray-500: #6b7280; --gray-600: #4b5563; --gray-800: #1f2937;
+      --shadow: 0 2px 8px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+      --radius: 0.75rem; --radius-lg: 1.25rem;
+      --transition: 200ms ease;
     }
+
+    html, body {
+      margin: 0; padding: 0;
+      width: 100%; max-width: 100vw;
+      overflow-x: hidden; overflow-y: auto;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    input, select, button { user-select: text; -webkit-user-select: text; }
+
+    @keyframes gradientShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    @keyframes slideIn { from{opacity:0;transform:translateY(-20px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
 
     body {
-      background: linear-gradient(145deg, #e9f0f9 0%, #dde5f0 100%);
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
-      padding: 1.5rem;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      background: linear-gradient(-45deg, #f0f4ff, #e0e7ff, #dbeafe);
+      background-size: 300% 300%;
+      animation: gradientShift 12s ease infinite;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh; width: 100%;
+      display: flex; align-items: flex-start; justify-content: center;
+      color: var(--gray-800); line-height: 1.4;
+      font-size: 14px;
+      padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
     }
 
-    .app-wrapper {
-      max-width: 1400px;
-      width: 100%;
-      margin: 0 auto;
+    .app-container { width: 100%; max-width: 100%; min-height: 100vh; }
+
+    /* ========== MENÚ ========== */
+    .menu-container {
+      width: 100%; min-height: 100vh;
+      padding: 1.5rem 1rem;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
     }
 
-    #areaCompartir {
-      background: #ffffff;
-      border-radius: 2rem;
-      box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0,0,0,0.05);
-      overflow: hidden;
-      transition: all 0.2s ease;
-    }
-
-    .header-modern {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1.5rem 2rem 0.75rem 2rem;
-      flex-wrap: wrap;
-      background: white;
-      border-bottom: 1px solid #eef2fa;
+    .content-wrapper {
+      width: 100%; max-width: 100%;
+      padding: 0 0.5rem;
+      animation: float 5s ease-in-out infinite;
     }
 
     .logo-area {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex: 1;
+      margin-bottom: 2rem;
+      display: flex; flex-direction: column;
+      align-items: center; text-align: center;
+      width: 100%;
     }
 
-    .logo {
-      width: 58px;
-      height: auto;
-      object-fit: contain;
-      display: block;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+    .logo-svg {
+      width: 90px; height: 90px;
+      filter: drop-shadow(0 3px 8px rgba(13,52,158,0.2));
+    }
+    .logo-svg img {
+      width: 100%; height: 100%;
+      object-fit: contain; border-radius: 50%;
     }
 
-    .header-modern h1 {
-      font-size: 1.7rem;
-      font-weight: 700;
-      background: linear-gradient(135deg, #0f4c81 0%, #1e6aa5 100%);
-      background-clip: text;
-      -webkit-background-clip: text;
-      color: transparent;
-      letter-spacing: -0.3px;
+    .logo-text {
+      margin-top: 0.75rem;
+      font-size: 1.4rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--primary-700), var(--primary-500));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; line-height: 1.2;
     }
 
+    .logo-sub {
+      font-size: 0.8rem; color: var(--gray-600);
+      margin-top: 0.25rem; font-weight: 500;
+    }
+
+    .buttons-group {
+      display: flex; flex-direction: column;
+      gap: 0.875rem; margin: 1.5rem 0;
+      width: 100%; max-width: 100%;
+    }
+    @media (min-width: 480px) {
+      .buttons-group { flex-direction: row; }
+    }
+
+    .btn {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: none; border-radius: var(--radius-lg);
+      font-size: 1rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; cursor: pointer;
+      transition: var(--transition); color: white;
+      box-shadow: var(--shadow);
+    }
+    .btn-credito { background: linear-gradient(135deg, var(--primary-700), var(--primary-600)); }
+    .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+    .btn:active { transform: scale(0.99); }
+    .btn span:first-child { font-size: 1.1rem; }
+
+    .footer-note {
+      margin-top: 1.5rem; font-size: 0.7rem;
+      color: var(--gray-500); text-align: center;
+      padding-top: 0.75rem; border-top: 1px solid var(--gray-200);
+    }
+
+    /* ========== HEADER ========== */
+    .header-modern {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 1rem; background: white;
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky; top: 0; z-index: 50;
+      box-shadow: var(--shadow); width: 100%;
+      flex-wrap: nowrap;
+    }
+
+    .back-btn {
+      background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+      color: white; border: none;
+      padding: 0.5rem 1rem; border-radius: var(--radius);
+      font-weight: 600; font-size: 0.85rem;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    }
+
+    .logo-small {
+      width: 36px; height: 36px;
+      border-radius: var(--radius); flex-shrink: 0;
+    }
+
+    .module h1 {
+      font-size: 1rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--primary-700), var(--primary-600));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin: 0; text-align: center;
+      flex: 1; min-width: 0; overflow: hidden;
+      text-overflow: ellipsis; padding: 0 0.5rem;
+    }
+
+    /* ========== FORMULARIOS ========== */
     .card-form-modern {
-      background: #10436f;
-      margin: 1.5rem 1.8rem;
-      padding: 1.5rem 1.8rem;
-      border-radius: 1.8rem;
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
-      transition: all 0.2s;
+      background: linear-gradient(145deg, #0d349e, #05143d) !important;
+      margin: 0.75rem; padding: 1rem;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: calc(100% - 1.5rem); max-width: 100%;
+      border: 1px solid rgba(255,255,255,0.1);
     }
 
     .form-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1.5rem;
-      align-items: flex-end;
+      display: flex; flex-direction: column;
+      gap: 0.75rem; width: 100%;
+    }
+    @media (min-width: 400px) {
+      .form-row { flex-direction: row; flex-wrap: wrap; }
     }
 
     .input-group {
-      flex: 1;
-      min-width: 180px;
+      flex: 1 1 100%; min-width: 0;
+      display: flex; flex-direction: column;
+      gap: 0.4rem;
+    }
+    @media (min-width: 400px) {
+      .input-group { flex: 1 1 calc(50% - 0.375rem); }
     }
 
     .card-form-modern label {
-      display: block;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.85);
-      margin-bottom: 0.5rem;
+      font-size: 0.65rem; text-transform: uppercase;
+      font-weight: 700; color: rgba(255,255,255,0.9);
+      letter-spacing: 0.3px;
     }
 
     .field-modern, .select-modern {
-      width: 100%;
-      padding: 0.9rem 1rem;
-      border-radius: 1.2rem;
-      border: none;
-      background: white;
-      font-size: 1rem;
-      font-weight: 500;
-      color: #0a2b44;
-      outline: none;
-      transition: all 0.2s;
-      font-family: inherit;
+      width: 100%; padding: 0.6rem 0.75rem;
+      border-radius: var(--radius); border: 2px solid transparent;
+      background: white; font-size: 0.9rem;
+      font-weight: 500; color: var(--gray-800); outline: none;
     }
-
+    .field-modern::placeholder { color: #9ca3af; }
     .field-modern:focus, .select-modern:focus {
-      box-shadow: 0 0 0 3px rgba(255,215,0,0.5);
-      transform: scale(1.01);
+      border-color: var(--warning-600);
+      box-shadow: 0 0 0 3px rgba(217,119,6,0.2);
+    }
+    .select-modern {
+      appearance: none;
+      background-image: url("image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.5rem center;
+      background-repeat: no-repeat; background-size: 1em 1em;
+      padding-right: 2rem;
     }
 
+    /* ========== TABLAS ========== */
     .table-container {
-      padding: 0 1.8rem 1.8rem 1.8rem;
-      overflow-x: auto;
-      width: 100%;
+      padding: 0 0.75rem 1rem;
+      width: 100%; overflow: hidden;
     }
 
     .financing-table {
       width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      background: rgb(255, 255, 255);
-      border-radius: 1.4rem;
+      border-collapse: collapse;
+      background: white;
+      border-radius: var(--radius);
       overflow: hidden;
-      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.03);
-      font-size: 0.9rem;
+      box-shadow: var(--shadow);
+      font-size: clamp(0.65rem, 2.8vw, 0.82rem);
+      table-layout: fixed;
     }
 
-    .financing-table thead tr {
-      background: #10436f;
+    .financing-table thead {
+      background: linear-gradient(135deg, var(--primary-800), var(--primary-700));
     }
 
     .financing-table th {
-      text-align: center;
-      padding: 1rem 1rem;
-      font-weight: 700;
-      color: #ffffff;
-      font-size: 0.85rem;
-      letter-spacing: 0.3px;
+      color: white;
+      padding: clamp(0.4rem, 1.5vw, 0.6rem) clamp(0.3rem, 1vw, 0.5rem);
+      text-align: center; font-weight: 700;
       text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
     }
 
     .financing-table td {
-      padding: 1rem 1rem;
-      border-bottom: 1px solid #eff3f8;
-      text-align: center;
-      vertical-align: middle;
+      padding: clamp(0.4rem, 1.5vw, 0.6rem) clamp(0.3rem, 1vw, 0.5rem);
+      border-bottom: 1px solid var(--gray-100);
+      text-align: center; font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
     }
 
-    .financing-table tr:last-child td {
-      border-bottom: none;
-    }
+    .financing-table tbody tr:last-child td { border-bottom: none; }
+    .financing-table tbody tr:hover { background: var(--primary-50); }
 
-    .financing-table tr:hover td {
-      background-color: #fafcff;
-    }
-
-    /* Colores personalizados por columna */
-    .col-plazo {
-      color: #0f4c81;
-      font-weight: 700;
-      font-size: 0.95rem;
-    }
-
-    .col-cuota {
-      color: #059669;
-      font-weight: 800;
-      font-size: 1rem;
-    }
-
-    .col-interes {
-      color: #ea470c;
-      font-weight: 600;
-    }
-
-    .col-total {
-      color: #361177;
-      font-weight: 800;
-      font-size: 0.95rem;
-    }
+    .col-plazo { color: var(--primary-700); font-weight: 700; }
+    .col-cuota { color: var(--success-600); font-weight: 700; }
+    .col-interes { color: var(--warning-600); font-weight: 600; }
+    .col-total { color: var(--primary-800); font-weight: 800; }
 
     .footer-text {
-      text-align: center;
-      font-size: 0.7rem;
-      color: #6c86a3;
-      background: #f9fbfe;
-      padding: 1rem 1.5rem;
-      border-top: 1px solid #eef2fa;
-      font-weight: 500;
-      letter-spacing: 0.3px;
+      text-align: center; font-size: 0.65rem;
+      color: var(--gray-500); padding: 0.75rem;
+      border-top: 1px solid var(--gray-200);
+      background: white;
     }
 
-    @media (max-width: 780px) {
-      body {
-        padding: 1rem;
-      }
-      .financing-table th, .financing-table td {
-        padding: 0.75rem 0.65rem;
-        font-size: 0.75rem;
-      }
-      .card-form-modern {
-        margin: 1rem 1.2rem;
-        padding: 1.2rem;
-      }
-      .table-container {
-        padding: 0 1.2rem 1.2rem 1.2rem;
-      }
-      .header-modern h1 {
-        font-size: 1.3rem;
-      }
-      .logo {
-        width: 46px;
-      }
-      .form-row {
-        gap: 0.8rem;
-      }
-      .col-plazo, .col-cuota, .col-interes, .col-total {
-        font-size: 0.7rem;
-      }
+    /* Módulos */
+    .module {
+      display: none;
+      width: 100%; min-height: 100vh;
+      background: white;
     }
+    .module.active-module { display: block; }
 
-    @media (max-width: 540px) {
-      .financing-table th, .financing-table td {
-        padding: 0.65rem 0.5rem;
-        font-size: 0.7rem;
+    /* 🚨 ALERTA PERSONALIZADA */
+    .custom-alert-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .custom-alert-overlay.active { display: flex; }
+    
+    .custom-alert {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      max-width: 90%;
+      width: 320px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideIn 0.3s ease;
+    }
+    
+    .custom-alert-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--primary-100);
+    }
+    
+    .custom-alert-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 1.2rem; flex-shrink: 0;
+    }
+    
+    .custom-alert-title {
+      font-size: 1.1rem; font-weight: 700;
+      color: var(--primary-800); margin: 0;
+    }
+    
+    .custom-alert-message {
+      font-size: 0.95rem; color: var(--gray-700);
+      line-height: 1.5; margin-bottom: 1.25rem;
+    }
+    
+    .custom-alert-button {
+      width: 100%; padding: 0.75rem;
+      background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+      color: white; border: none;
+      border-radius: var(--radius);
+      font-weight: 600; font-size: 0.95rem;
+      cursor: pointer; transition: var(--transition);
+    }
+    .custom-alert-button:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+    .custom-alert-button:active { transform: scale(0.98); }
+
+    /* 🖨️ Impresión */
+    @media print {
+      body { background: white !important; padding: 0 !important; font-size: 9pt !important; }
+      .card-form-modern, .footer-text, 
+      .header-modern .back-btn, .menu-container, .footer-note,
+      .custom-alert-overlay { display: none !important; }
+      .module.active-module { display: block !important; background: white; }
+      .financing-table {
+        box-shadow: none !important; border: 1px solid #000 !important; font-size: 8pt !important;
       }
       .financing-table th {
-        font-size: 0.7rem;
-      }
-      .field-modern, .select-modern {
-        padding: 0.7rem 0.9rem;
-        font-size: 0.9rem;
+        background: #1e40af !important; color: white !important;
+        -webkit-print-color-adjust: exact; print-color-adjust: exact;
       }
     }
 
-    @media (min-width: 1200px) {
-      .financing-table th, .financing-table td {
-        padding: 1.2rem 1.4rem;
-        font-size: 1rem;
-      }
+    @media screen and (-webkit-min-device-pixel-ratio: 0) {
+      input, select { font-size: 16px !important; }
     }
   </style>
 </head>
 <body>
-<div class="app-wrapper">
-  <div id="areaCompartir">
-    <div class="header-modern">
+<div class="app-container">
+  <!-- MENÚ PRINCIPAL -->
+  <div id="menuPrincipal" class="menu-container">
+    <div class="content-wrapper">
       <div class="logo-area">
-        <img src="logo.png" class="logo" alt="Logo San Gaspar" onerror="this.src='https://placehold.co/60x60?text=SG';">
-        <h1>COTIZADOR SG</h1>
+        <div class="logo-svg">
+          <img src="logo.png" alt="San Gaspar">
+        </div>
+        <div class="logo-text">SAN GASPAR R.L.</div>
+        <div class="logo-sub">COOPERATIVA DE AHORRO Y CRÉDITO</div>
       </div>
+      <div class="buttons-group">
+        <button id="btnCredito" class="btn btn-credito">
+          <span>💳</span><span>Crédito</span>
+        </button>
+      </div>
+      <div class="footer-note">📱 Cotizador | Crédito v2.2</div>
     </div>
+  </div>
 
+  <!-- MÓDULO CRÉDITOS -->
+  <div id="module-creditos" class="module">
+    <div class="header-modern">
+      <button class="back-btn" onclick="mostrarMenu()">← Volver</button>
+      <h1>COTIZADOR DE CRÉDITOS</h1>
+      <img src="logo.png" class="logo-small" onerror="this.style.display='none'" alt="logo">
+    </div>
     <div class="card-form-modern">
       <div class="form-row">
         <div class="input-group">
-          <label>💰 MONTO A FINANCIAR</label>
-          <input type="text" id="monto" class="field-modern" placeholder="Ej: 1,000" inputmode="decimal" value="">
+          <label>💰 MONTO</label>
+          <input type="text" id="monto" class="field-modern" placeholder="1,000" inputmode="decimal">
         </div>
         <div class="input-group">
-          <label>📊 TASA DE INTERÉS (MENSUAL)</label>
+          <label>📊 TASA</label>
           <select id="tasa" class="select-modern">
             <option value="24">2.00% PRINCIPAL</option>
             <option value="20">1.67% DEPOSITARIA</option>
@@ -281,149 +393,164 @@
         </div>
       </div>
     </div>
-
     <div class="table-container">
       <table class="financing-table" id="tablaResultados">
         <thead>
           <tr>
             <th>PLAZO</th>
-            <th>CUOTA MENSUAL</th>
-            <th>TOTAL INTERÉS</th>
-            <th>TOTAL A PAGAR</th>
+            <th>CUOTA</th>
+            <th>INTERÉS</th>
+            <th>TOTAL</th>
           </tr>
         </thead>
         <tbody id="tablaBody">
-          <tr><td colspan="4" style="text-align:center; padding: 2rem; color: #6c86a3;">💰 Ingrese un monto para ver las opciones de financiamiento</td></tr>
+          <tr><td colspan="4" style="text-align:center;padding:1rem">💰 Ingrese un monto</td></tr>
         </tbody>
       </table>
     </div>
+    <div class="footer-text">COTIZADOR DE CRÉDITOS · EC</div>
+  </div>
 
-    <div class="footer-text">
-      COTIZADOR SG v2.1 · ECM
+  <!-- 🚨 MODAL DE ALERTA PERSONALIZADO -->
+  <div id="customAlert" class="custom-alert-overlay">
+    <div class="custom-alert">
+      <div class="custom-alert-header">
+        <div class="custom-alert-icon" id="alertIcon">⚠️</div>
+        <h3 class="custom-alert-title">San Gaspar R.L.</h3>
+      </div>
+      <div class="custom-alert-message" id="alertMessage">Mensaje</div>
+      <button class="custom-alert-button" onclick="cerrarAlerta()">Aceptar</button>
     </div>
   </div>
 </div>
 
 <script>
-  const plazosMeses = [12, 18, 24, 36, 48, 60, 72, 84, 96, 108, 120];
+  const menuPrincipal = document.getElementById('menuPrincipal');
+  const moduleCredito = document.getElementById('module-creditos');
 
-  function formatMoney(valor) {
-    if (isNaN(valor) || valor === null) return "Q 0.00";
-    return "Q " + valor.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+  // ========== FUNCIONES DE ALERTA PERSONALIZADA ==========
+  function mostrarAlerta(mensaje, tipo = 'warning') {
+    const alert = document.getElementById('customAlert');
+    const message = document.getElementById('alertMessage');
+    const icon = document.getElementById('alertIcon');
+    const iconos = { warning: '⚠️', error: '❌', success: '✅', info: 'ℹ️' };
+    message.textContent = mensaje;
+    icon.textContent = iconos[tipo] || iconos.warning;
+    alert.classList.add('active');
   }
 
-  function cleanNumber(value) {
-    if (!value || value === "") return 0;
-    let limpio = String(value).replace(/Q/gi, '').replace(/,/g, '').trim();
-    let numero = parseFloat(limpio);
-    return isNaN(numero) ? 0 : numero;
+  function cerrarAlerta() {
+    document.getElementById('customAlert').classList.remove('active');
   }
 
-  function calcularCuotaMensual(monto, tasaAnualPorcentaje, meses) {
-    if (monto <= 0 || meses <= 0) return 0;
-    const tasaMensual = (tasaAnualPorcentaje / 100) / 12;
-    if (tasaMensual === 0) return monto / meses;
-    const factor = Math.pow(1 + tasaMensual, meses);
-    const cuota = monto * (tasaMensual * factor) / (factor - 1);
-    return cuota;
-  }
+  document.getElementById('customAlert').addEventListener('click', function(e) {
+    if (e.target === this) cerrarAlerta();
+  });
 
-  function formatPlazoConAnio(meses) {
-    return `${meses} MESES`;
-  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') cerrarAlerta();
+  });
 
-  function renderizarTabla() {
-    const montoInput = document.getElementById("monto");
-    const tasaSelect = document.getElementById("tasa");
-    const tbody = document.getElementById("tablaBody");
-
-    let montoRaw = cleanNumber(montoInput.value);
-    
-    if (montoRaw === 0 || montoInput.value === "") {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem; color: #6c86a3;">💰 Ingrese un monto para ver las opciones de financiamiento</td></tr>`;
-      return;
-    }
-
-    const tasaMensualPorcentaje = parseFloat(tasaSelect.value);
-    if (isNaN(tasaMensualPorcentaje)) {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 2rem;">Error en la tasa seleccionada</td></tr>`;
-      return;
-    }
-
-    let filasHtml = "";
-
-    for (let meses of plazosMeses) {
-      const cuota = calcularCuotaMensual(montoRaw, tasaMensualPorcentaje, meses);
-      if (isNaN(cuota) || !isFinite(cuota)) continue;
-
-      const totalPagar = cuota * meses;
-      const interesTotal = totalPagar - montoRaw;
-      const plazoTexto = formatPlazoConAnio(meses);
-      
-      filasHtml += `
-        <tr>
-          <td class="col-plazo">${plazoTexto}</td>
-          <td class="col-cuota">${formatMoney(cuota)}</td>
-          <td class="col-interes">${formatMoney(interesTotal)}</td>
-          <td class="col-total">${formatMoney(totalPagar)}</td>
-        </tr>
-      `;
-    }
-
-    if (filasHtml === "") {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 2rem;">No se pudieron calcular los plazos</td></tr>`;
+  // ========== NAVEGACIÓN ==========
+  function navegarA(vista) {
+    menuPrincipal.style.display = 'none';
+    moduleCredito.classList.remove('active-module');
+    if (vista === 'credito') {
+      moduleCredito.classList.add('active-module');
+      renderizarTablaCreditos();
     } else {
-      tbody.innerHTML = filasHtml;
+      menuPrincipal.style.display = 'flex';
     }
+    history.pushState({ vista: vista || 'menu' }, '', '#' + (vista || 'menu'));
   }
 
-  const montoField = document.getElementById("monto");
-  const tasaDropdown = document.getElementById("tasa");
-
-  montoField.addEventListener("input", () => {
-    renderizarTabla();
-  });
-
-  montoField.addEventListener("blur", () => {
-    let valorNumerico = cleanNumber(montoField.value);
-    if (valorNumerico > 0) {
-      montoField.value = formatMoney(valorNumerico);
-    } else if (valorNumerico === 0 || montoField.value === "") {
-      montoField.value = "";
+  window.addEventListener('popstate', function(e) {
+    const estado = e.state;
+    if (estado?.vista === 'credito') {
+      moduleCredito.classList.add('active-module');
+      menuPrincipal.style.display = 'none';
+      renderizarTablaCreditos();
+    } else {
+      mostrarMenu();
     }
-    renderizarTabla();
   });
 
-  tasaDropdown.addEventListener("change", () => {
-    renderizarTabla();
+  window.mostrarMenu = function() {
+    menuPrincipal.style.display = 'flex';
+    moduleCredito.classList.remove('active-module');
+    history.replaceState({ vista: 'menu' }, '', '#menu');
+  }
+
+  document.getElementById('btnCredito').onclick = (e) => { e.preventDefault(); navegarA('credito'); };
+
+  // ==================== CRÉDITOS ====================
+  const plazosMeses = [12,18,24,36,48,60,72,84,96,108,120];
+
+  function formatMoney(v) {
+    if (isNaN(v) || v === null) return "Q 0.00";
+    return "Q " + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function cleanNumber(v) {
+    if (!v || v === "") return 0;
+    const n = parseFloat(String(v).replace(/[^0-9.]/g, ''));
+    return isNaN(n) ? 0 : n;
+  }
+
+  function calcularCuota(monto, tasaAnual, meses) {
+    if (monto <= 0 || meses <= 0) return 0;
+    const tasaMensual = (tasaAnual / 100) / 12;
+    if (tasaMensual === 0) return monto / meses;
+    const f = Math.pow(1 + tasaMensual, meses);
+    return monto * (tasaMensual * f) / (f - 1);
+  }
+
+  function renderizarTablaCreditos() {
+    const monto = cleanNumber(document.getElementById("monto").value);
+    const tbody = document.getElementById("tablaBody");
+    if (monto === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:1rem">💰 Ingrese un monto</td></tr>`;
+      return;
+    }
+    const tasa = parseFloat(document.getElementById("tasa").value);
+    let html = "";
+    for (let m of plazosMeses) {
+      const cuota = calcularCuota(monto, tasa, m);
+      if (isNaN(cuota)) continue;
+      const total = cuota * m;
+      const interes = total - monto;
+      html += `<tr>
+        <td class="col-plazo">${m} MM</td>
+        <td class="col-cuota">${formatMoney(cuota)}</td>
+        <td class="col-interes">${formatMoney(interes)}</td>
+        <td class="col-total">${formatMoney(total)}</td>
+      </tr>`;
+    }
+    tbody.innerHTML = html;
+  }
+
+  const montoInput = document.getElementById("monto");
+  montoInput.addEventListener("input", renderizarTablaCreditos);
+  montoInput.addEventListener("blur", function() {
+    const v = cleanNumber(this.value);
+    if (v > 0) this.value = formatMoney(v);
+    renderizarTablaCreditos();
+  });
+  document.getElementById("tasa").onchange = renderizarTablaCreditos;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    history.replaceState({ vista: 'menu' }, '', '#menu');
+    document.getElementById('monto').value = '';
+    renderizarTablaCreditos();
+    mostrarMenu();
   });
 
-  window.addEventListener("DOMContentLoaded", () => {
-    montoField.value = "";
-    renderizarTabla();
-  });
-
-  // Limpiar Service Worker viejo y registrar el nuevo
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-      for(let registration of registrations) {
-        registration.unregister();
-        console.log('Service Worker viejo desregistrado');
-      }
-      navigator.serviceWorker.register("service-worker.js").then(function(reg) {
-        console.log('Service Worker registrado correctamente');
-      }).catch(function(err) {
-        console.log('Error al registrar SW:', err);
-      });
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(r => r.unregister());
+      navigator.serviceWorker.register("service-worker.js").catch(e => console.log("SW:", e));
     });
   }
-
-  window.addEventListener("resize", () => {
-    renderizarTabla();
-  });
 </script>
 </body>
 </html>
