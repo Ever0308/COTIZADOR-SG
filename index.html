@@ -539,6 +539,7 @@
             <option value="6">6 MESES</option>
             <option value="12">12 MESES</option>
             <option value="24">24 MESES</option>
+            <option value="36">36 MESES</option>
           </select>
         </div>
         <div class="input-group" id="plazoProgramadoGroup" style="display:none">
@@ -741,7 +742,7 @@
     plazofijo_pref: {
       min: 50000, requiereFechas: false, nombre: "Plazo Fijo Pref.", requiereTabla: true, muestraImprimir: true,
       rangos: [
-        { desde: 50000, hasta: Infinity, tasas: { 6: 9, 12: 10, 24: 22, 36: 36, 48: 'NA' } },
+        { desde: 50000, hasta: Infinity, tasas: { 6: 9, 12: 10, 24: 22, 36: 36 } },
       ],
       frecuencias: ['mensual','trimestral','semestral','anual']
     },
