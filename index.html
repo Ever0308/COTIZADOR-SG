@@ -845,7 +845,8 @@
     return html;
   }
 
-  // ========== NUEVA FUNCIÓN: ACTUALIZAR PLAZOS SEGÚN PRODUCTO ==========
+  // ========== FUNCIÓN ACTUALIZAR PLAZOS - MODIFICADA ==========
+  // Ahora muestra solo "X MESES" sin el porcentaje anual
   function actualizarPlazosAhorro() {
     const prod = document.getElementById('productoAhorro').value;
     const plazoSelect = document.getElementById('plazoAhorro');
@@ -854,7 +855,6 @@
     plazoSelect.innerHTML = '';
     
     if (!prod) {
-      // Si no hay producto seleccionado, no mostrar opciones
       return;
     }
     
@@ -864,35 +864,11 @@
     if (prod === 'plazofijo' || prod === 'plazofijo_pref') {
       const plazos = cfg.plazosDisponibles || [];
       
-      // Definir etiquetas de tasa según el producto
-      const getTasaLabel = (plazo) => {
-        if (prod === 'plazofijo') {
-          // Para Plazo Fijo, obtener la tasa del primer rango (si existe)
-          if (cfg.rangos && cfg.rangos.length > 0) {
-            const tasa = cfg.rangos[0].tasas[plazo];
-            if (tasa && tasa !== 'NA') {
-              return `${plazo} MESES (${tasa}% anual)`;
-            }
-          }
-          return `${plazo} MESES`;
-        } else if (prod === 'plazofijo_pref') {
-          // Para PF Preferencial, obtener la tasa del primer rango
-          if (cfg.rangos && cfg.rangos.length > 0) {
-            const tasa = cfg.rangos[0].tasas[plazo];
-            if (tasa && tasa !== 'NA') {
-              return `${plazo} MESES (${tasa}% anual)`;
-            }
-          }
-          return `${plazo} MESES`;
-        }
-        return `${plazo} MESES`;
-      };
-      
-      // Agregar opciones según los plazos disponibles
+      // Agregar opciones SOLO con el número de meses, sin porcentaje
       plazos.forEach(plazo => {
         const option = document.createElement('option');
         option.value = plazo;
-        option.textContent = getTasaLabel(plazo);
+        option.textContent = `${plazo} MESES`; // Solo muestra "6 MESES", "12 MESES", etc.
         plazoSelect.appendChild(option);
       });
     }
