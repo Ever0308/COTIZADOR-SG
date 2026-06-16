@@ -536,10 +536,7 @@
         <div class="input-group" id="plazoGroup" style="display:none">
           <label>⏱️ PLAZO</label>
           <select id="plazoAhorro" class="select-modern">
-            <option value="6">6 MESES</option>
-            <option value="12">12 MESES</option>
-            <option value="24">24 MESES</option>
-            <option value="36">36 MESES</option>
+            <!-- Los plazos se llenan dinámicamente según el producto -->
           </select>
         </div>
         <div class="input-group" id="plazoProgramadoGroup" style="display:none">
@@ -737,14 +734,18 @@
         { desde: 1000, hasta: 99999.99, tasas: { 6: 12, 12: 14, 24: 'NA' } },
         { desde: 100000, hasta: 1999999.99, tasas: { 6: 14, 12: 14, 24: 15 } },
         { desde: 2000000, hasta: Infinity, tasas: { 6: 14, 12: 15, 24: 16 } }
-      ]
+      ],
+      // Plazos disponibles para Plazo Fijo: SOLO 12 meses
+      plazosDisponibles: [12]
     },
     plazofijo_pref: {
       min: 50000, requiereFechas: false, nombre: "Plazo Fijo Pref.", requiereTabla: true, muestraImprimir: true,
       rangos: [
         { desde: 50000, hasta: Infinity, tasas: { 6: 9, 12: 10, 24: 22, 36: 36 } },
       ],
-      frecuencias: ['mensual','trimestral','semestral','anual']
+      frecuencias: ['mensual','trimestral','semestral','anual'],
+      // Plazos disponibles para PF Preferencial: 6, 12, 24 y 36 meses
+      plazosDisponibles: [6, 12, 24, 36]
     },
     inversion_f1: { min: 1000000, tasa: 10.5, requiereFechas: false, nombre: "Inversiones F.I", muestraImprimir: false },
     inversion_f2: {
@@ -842,6 +843,59 @@
       <td><strong style="color:#16a34a">${formatMoney(r.neto)}</strong></td>
     </tr></tfoot></table>`;
     return html;
+  }
+
+  // ========== NUEVA FUNCIÓN: ACTUALIZAR PLAZOS SEGÚN PRODUCTO ==========
+  function actualizarPlazosAhorro() {
+    const prod = document.getElementById('productoAhorro').value;
+    const plazoSelect = document.getElementById('plazoAhorro');
+    
+    // Limpiar opciones actuales
+    plazoSelect.innerHTML = '';
+    
+    if (!prod) {
+      // Si no hay producto seleccionado, no mostrar opciones
+      return;
+    }
+    
+    const cfg = productosAhorro[prod];
+    
+    // Solo para productos que usan el select de plazos (plazofijo y plazofijo_pref)
+    if (prod === 'plazofijo' || prod === 'plazofijo_pref') {
+      const plazos = cfg.plazosDisponibles || [];
+      
+      // Definir etiquetas de tasa según el producto
+      const getTasaLabel = (plazo) => {
+        if (prod === 'plazofijo') {
+          // Para Plazo Fijo, obtener la tasa del primer rango (si existe)
+          if (cfg.rangos && cfg.rangos.length > 0) {
+            const tasa = cfg.rangos[0].tasas[plazo];
+            if (tasa && tasa !== 'NA') {
+              return `${plazo} MESES (${tasa}% anual)`;
+            }
+          }
+          return `${plazo} MESES`;
+        } else if (prod === 'plazofijo_pref') {
+          // Para PF Preferencial, obtener la tasa del primer rango
+          if (cfg.rangos && cfg.rangos.length > 0) {
+            const tasa = cfg.rangos[0].tasas[plazo];
+            if (tasa && tasa !== 'NA') {
+              return `${plazo} MESES (${tasa}% anual)`;
+            }
+          }
+          return `${plazo} MESES`;
+        }
+        return `${plazo} MESES`;
+      };
+      
+      // Agregar opciones según los plazos disponibles
+      plazos.forEach(plazo => {
+        const option = document.createElement('option');
+        option.value = plazo;
+        option.textContent = getTasaLabel(plazo);
+        plazoSelect.appendChild(option);
+      });
+    }
   }
 
   function calcularAhorro() {
@@ -993,8 +1047,13 @@
       document.getElementById('fechaInicioAhorro').value = new Date().toISOString().split('T')[0];
       document.getElementById('fechaFinAhorro').value = '';
     } else {
+      // Mostrar el grupo de plazos y actualizar opciones
       document.getElementById('plazoGroup').style.display = 'flex';
-      if (cfg.frecuencias) { document.getElementById('frecuenciaGroup').style.display = 'flex'; }
+      actualizarPlazosAhorro(); // Llamar a la nueva función
+      
+      if (cfg.frecuencias) { 
+        document.getElementById('frecuenciaGroup').style.display = 'flex'; 
+      }
     }
   }
 
