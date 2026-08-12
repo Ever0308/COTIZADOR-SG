@@ -676,9 +676,10 @@
   // ==================== CRÉDITOS ====================
   const plazosMeses = [12,18,24,36,48,60,72,84,96,108,120];
 
-  // Límites máximos por número de crédito para CREDIVIVIENDA (plazo fijo 48 meses)
+  // Límites máximos por número de crédito para CREDIVIVIENDA
   const limitesCredivivienda = { 1: 200000, 2: 250000, 3: 300000 };
-  const PLAZO_CREDIVIVIENDA = 48;
+  // Plazos disponibles para CREDIVIVIENDA (48 meses es el máximo, no fijo)
+  const plazosCredivivienda = [12, 18, 24, 36, 48];
 
   function formatMoney(v) {
     if (isNaN(v) || v === null) return "Q 0.00";
@@ -738,15 +739,20 @@
         return;
       }
 
-      const cuota = calcularCuota(monto, tasa, PLAZO_CREDIVIVIENDA);
-      const total = cuota * PLAZO_CREDIVIVIENDA;
-      const interes = total - monto;
-      tbody.innerHTML = `<tr>
-        <td class="col-plazo">${PLAZO_CREDIVIVIENDA} MM</td>
-        <td class="col-cuota">${formatMoney(cuota)}</td>
-        <td class="col-interes">${formatMoney(interes)}</td>
-        <td class="col-total">${formatMoney(total)}</td>
-      </tr>`;
+      let htmlCrediviv = "";
+      for (let m of plazosCredivivienda) {
+        const cuota = calcularCuota(monto, tasa, m);
+        if (isNaN(cuota)) continue;
+        const total = cuota * m;
+        const interes = total - monto;
+        htmlCrediviv += `<tr>
+          <td class="col-plazo">${m} MM</td>
+          <td class="col-cuota">${formatMoney(cuota)}</td>
+          <td class="col-interes">${formatMoney(interes)}</td>
+          <td class="col-total">${formatMoney(total)}</td>
+        </tr>`;
+      }
+      tbody.innerHTML = htmlCrediviv;
       return;
     }
 
