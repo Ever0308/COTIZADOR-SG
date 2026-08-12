@@ -112,7 +112,7 @@
   .live-readout{ font-family:var(--mono); font-size:11.5px; color:var(--accent-2); background:var(--bg-panel-2); border:1px solid var(--border); border-radius:7px; padding:9px; min-height:30px; line-height:1.55; white-space:pre-line; box-shadow:inset 0 1px 4px rgba(0,0,0,.25); }
 
   main{ flex:1; position:relative; background:var(--bg-deep); overflow:hidden; }
-  canvas{display:block;cursor:crosshair;}
+  canvas{display:block;cursor:crosshair;touch-action:none;}
   main.pan-mode canvas{cursor:grab;}
   main.panning canvas{cursor:grabbing;}
   .zoom-controls{ position:absolute; right:16px; bottom:16px; display:flex; flex-direction:column; gap:5px; z-index:4; }
@@ -173,12 +173,53 @@
   .modal-body input[type=text]{margin-top:2px;}
   .modal-actions{ display:flex;justify-content:flex-end;gap:8px; padding:13px 18px; background:var(--bg-panel-2); border-top:1px solid var(--border); }
   .modal-actions button{text-align:center;min-width:84px;}
+
+  /* ================= RESPONSIVE (TABLET / TELÉFONO) ================= */
+  .drawer-toggle{ display:none; }
+  .drawer-close{ display:none; }
+  .drawer-backdrop{ position:fixed; inset:0; background:rgba(4,12,20,.55); z-index:55; display:none; backdrop-filter:blur(1px); }
+  .drawer-backdrop.show{ display:block; }
+
+  @media (max-width: 880px){
+    header{ padding:9px 12px; gap:8px; }
+    .brand h1{ font-size:14px; }
+    .brand .sub{ display:none; }
+    .total-badge .val{ font-size:17px; }
+    .help-btn{ padding:7px 10px; font-size:11px; }
+
+    .drawer-toggle{
+      display:flex; align-items:center; justify-content:center;
+      width:36px; height:36px; flex-shrink:0; padding:0; font-size:16px; border-radius:9px;
+    }
+    .drawer-close{
+      display:block; width:100%; text-align:center; margin-bottom:4px;
+      background:var(--bg-panel-2); border-color:var(--accent-dim); color:var(--accent-2); font-weight:700;
+    }
+
+    aside.toolbar, aside.list-panel{
+      position:fixed; top:0; bottom:0; z-index:60;
+      width:min(85vw, 300px);
+      box-shadow:var(--shadow-lg);
+      transition:transform .25s ease;
+    }
+    aside.toolbar{ left:0; transform:translateX(-100%); }
+    aside.toolbar.open{ transform:translateX(0); }
+    aside.list-panel{ right:0; transform:translateX(100%); }
+    aside.list-panel.open{ transform:translateX(0); }
+
+    main#mainCanvasWrap{ width:100%; }
+    .zoom-controls{ bottom:70px; }
+  }
 </style>
 </head>
 <body>
 
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+
+
 <header>
   <div class="brand">
+    <button class="drawer-toggle" id="btnToggleTools" aria-label="Herramientas">🛠️</button>
     <span class="mark">PLANO</span>
     <div>
       <h1>Medidor de Superficies</h1>
@@ -186,6 +227,7 @@
     </div>
   </div>
   <div class="header-right">
+    <button class="drawer-toggle" id="btnToggleList" aria-label="Áreas y textos">📋</button>
     <button class="help-btn" id="btnHelp">❔ Ayuda</button>
     <div class="total-badge">
       <div class="lbl">Área total del plano</div>
@@ -199,6 +241,7 @@
 <div class="app">
 
   <aside class="toolbar">
+    <button class="drawer-close" id="btnCloseTools">✕ Cerrar</button>
     <div class="group">
       <div class="group-title">Historial</div>
       <div class="row2">
@@ -269,6 +312,7 @@
   </main>
 
   <aside class="list-panel">
+    <button class="drawer-close" id="btnCloseList">✕ Cerrar</button>
     <div class="group-title">Áreas de este plano</div>
     <div class="shapes-list" id="shapesList">
       <div class="empty-note">Aún no has cerrado ninguna figura.</div>
@@ -407,6 +451,41 @@
   const canvas = document.getElementById('canvas');
   const ctx = canvas.getContext('2d');
   const mainWrap = document.getElementById('mainCanvasWrap');
+
+  // ================= PANELES MÓVILES (TOOLBAR / LISTA COMO CAJONES) =================
+  (function(){
+    const asideTools = document.querySelector('aside.toolbar');
+    const asideList = document.querySelector('aside.list-panel');
+    const backdrop = document.getElementById('drawerBackdrop');
+    const btnOpenTools = document.getElementById('btnToggleTools');
+    const btnOpenList = document.getElementById('btnToggleList');
+    const btnCloseTools = document.getElementById('btnCloseTools');
+    const btnCloseList = document.getElementById('btnCloseList');
+
+    function closeDrawers(){
+      asideTools.classList.remove('open');
+      asideList.classList.remove('open');
+      backdrop.classList.remove('show');
+    }
+    function openTools(){
+      asideList.classList.remove('open');
+      asideTools.classList.add('open');
+      backdrop.classList.add('show');
+    }
+    function openList(){
+      asideTools.classList.remove('open');
+      asideList.classList.add('open');
+      backdrop.classList.add('show');
+    }
+
+    btnOpenTools.addEventListener('click', openTools);
+    btnOpenList.addEventListener('click', openList);
+    btnCloseTools.addEventListener('click', closeDrawers);
+    btnCloseList.addEventListener('click', closeDrawers);
+    backdrop.addEventListener('click', closeDrawers);
+    window.addEventListener('resize', ()=>{ if(window.innerWidth > 880) closeDrawers(); });
+  })();
+
 
   let pxPerMeter = 40;
   let panX = 0, panY = 0;
@@ -1394,6 +1473,78 @@
       renderPlanosBar();
     }
   });
+
+  // ================= SOPORTE TÁCTIL (MÓVIL) =================
+  // Traduce toques (touch) a los mismos eventos de mouse que ya maneja la app,
+  // para poder dibujar, arrastrar vértices y usar el menú contextual con el dedo.
+  (function(){
+    const LONG_PRESS_MS = 550;   // mantener presionado = clic derecho (menú contextual)
+    const MOVE_THRESHOLD = 10;   // px de tolerancia antes de considerar que hubo arrastre
+    const DOUBLE_TAP_MS = 350;   // ventana para detectar doble-tap
+
+    let startPt = null, moved = false;
+    let longPressTimer = null, longPressFired = false;
+    let lastTapTime = 0, lastTapPt = null;
+
+    function touchXY(e){
+      const t = e.touches[0] || e.changedTouches[0];
+      return { clientX: t.clientX, clientY: t.clientY };
+    }
+    function fire(type, pt, target){
+      target.dispatchEvent(new MouseEvent(type, {
+        bubbles: true, cancelable: true, view: window,
+        clientX: pt.clientX, clientY: pt.clientY, button: 0
+      }));
+    }
+    function dist(a,b){ return Math.hypot(a.clientX-b.clientX, a.clientY-b.clientY); }
+
+    canvas.addEventListener('touchstart', function(e){
+      if(e.touches.length>1) return;
+      e.preventDefault();
+      const pt = touchXY(e);
+      startPt = pt; moved = false; longPressFired = false;
+      clearTimeout(longPressTimer);
+      longPressTimer = setTimeout(()=>{
+        longPressFired = true;
+        fire('contextmenu', pt, canvas);
+      }, LONG_PRESS_MS);
+      fire('mousedown', pt, canvas);
+    }, {passive:false});
+
+    canvas.addEventListener('touchmove', function(e){
+      if(e.touches.length>1) return;
+      e.preventDefault();
+      const pt = touchXY(e);
+      if(startPt && dist(startPt, pt) > MOVE_THRESHOLD){
+        moved = true;
+        clearTimeout(longPressTimer);
+      }
+      fire('mousemove', pt, window);
+    }, {passive:false});
+
+    canvas.addEventListener('touchend', function(e){
+      e.preventDefault();
+      clearTimeout(longPressTimer);
+      const pt = touchXY(e);
+      fire('mouseup', pt, window);
+      if(!moved && !longPressFired){
+        const now = Date.now();
+        if(lastTapPt && (now-lastTapTime) < DOUBLE_TAP_MS && dist(lastTapPt, pt) < MOVE_THRESHOLD){
+          fire('dblclick', pt, canvas);
+          lastTapTime = 0; lastTapPt = null;
+        } else {
+          fire('click', pt, canvas);
+          lastTapTime = now; lastTapPt = pt;
+        }
+      }
+      startPt = null;
+    }, {passive:false});
+
+    canvas.addEventListener('touchcancel', function(){
+      clearTimeout(longPressTimer);
+      startPt = null; moved = false;
+    }, {passive:false});
+  })();
 
   canvas.addEventListener('click', (e)=>{
     if(justDragged){ justDragged=false; return; }
