@@ -112,6 +112,7 @@
     }
     .btn-credito { background: linear-gradient(135deg, var(--primary-700), var(--primary-600)); }
     .btn-ahorros { background: linear-gradient(135deg, var(--success-600), var(--success-500)); }
+    .btn-planos { background: linear-gradient(135deg, #b45309, #d97706); }
     .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
     .btn:active { transform: scale(0.99); }
     .btn span:first-child { font-size: 1.1rem; }
@@ -354,6 +355,11 @@
       background: white;
     }
     .module.active-module { display: block; }
+    #module-planos.active-module { display: flex; flex-direction: column; height: 100vh; }
+    #module-planos .header-modern { flex-shrink: 0; }
+    #module-planos iframe {
+      flex: 1; width: 100%; border: none; display: block; background: #0A1B2E;
+    }
 
     /* 🚨 ALERTA PERSONALIZADA */
     .custom-alert-overlay {
@@ -455,6 +461,9 @@
         </button>
         <button id="btnAhorros" class="btn btn-ahorros">
           <span>🏦</span><span>Ahorros</span>
+        </button>
+        <button id="btnPlanos" class="btn btn-planos">
+          <span>📐</span><span>Planos</span>
         </button>
       </div>
       <div class="footer-note">📱 Cotizador | Crédito · Ahorros v2.2</div>
@@ -588,6 +597,16 @@
     <div class="footer-text">COTIZADOR DE AHORROS · EC</div>
   </div>
 
+  <!-- MÓDULO PLANOS -->
+  <div id="module-planos" class="module">
+    <div class="header-modern">
+      <button class="back-btn" onclick="mostrarMenu()">← Volver</button>
+      <h1>MEDIDOR DE PLANOS</h1>
+      <img src="logo.png" class="logo-small" onerror="this.style.display='none'" alt="logo">
+    </div>
+    <iframe id="iframePlanos" src="medidor-de-superficies.html" title="Medidor de Superficies" loading="lazy"></iframe>
+  </div>
+
   <!-- 🚨 MODAL DE ALERTA PERSONALIZADO -->
   <div id="customAlert" class="custom-alert-overlay">
     <div class="custom-alert">
@@ -605,6 +624,7 @@
   const menuPrincipal = document.getElementById('menuPrincipal');
   const moduleCredito = document.getElementById('module-creditos');
   const moduleAhorro = document.getElementById('module-ahorros');
+  const modulePlanos = document.getElementById('module-planos');
 
   // ========== FUNCIONES DE ALERTA PERSONALIZADA ==========
   function mostrarAlerta(mensaje, tipo = 'warning') {
@@ -634,12 +654,15 @@
     menuPrincipal.style.display = 'none';
     moduleCredito.classList.remove('active-module');
     moduleAhorro.classList.remove('active-module');
+    modulePlanos.classList.remove('active-module');
     if (vista === 'credito') {
       moduleCredito.classList.add('active-module');
       renderizarTablaCreditos();
     } else if (vista === 'ahorro') {
       moduleAhorro.classList.add('active-module');
       document.getElementById('resultadosAhorro').style.display = 'none';
+    } else if (vista === 'planos') {
+      modulePlanos.classList.add('active-module');
     } else {
       menuPrincipal.style.display = 'flex';
     }
@@ -651,13 +674,20 @@
     if (estado?.vista === 'credito') {
       moduleCredito.classList.add('active-module');
       moduleAhorro.classList.remove('active-module');
+      modulePlanos.classList.remove('active-module');
       menuPrincipal.style.display = 'none';
       renderizarTablaCreditos();
     } else if (estado?.vista === 'ahorro') {
       moduleAhorro.classList.add('active-module');
       moduleCredito.classList.remove('active-module');
+      modulePlanos.classList.remove('active-module');
       menuPrincipal.style.display = 'none';
       document.getElementById('resultadosAhorro').style.display = 'none';
+    } else if (estado?.vista === 'planos') {
+      modulePlanos.classList.add('active-module');
+      moduleCredito.classList.remove('active-module');
+      moduleAhorro.classList.remove('active-module');
+      menuPrincipal.style.display = 'none';
     } else {
       mostrarMenu();
     }
@@ -667,11 +697,13 @@
     menuPrincipal.style.display = 'flex';
     moduleCredito.classList.remove('active-module');
     moduleAhorro.classList.remove('active-module');
+    modulePlanos.classList.remove('active-module');
     history.replaceState({ vista: 'menu' }, '', '#menu');
   }
 
   document.getElementById('btnCredito').onclick = (e) => { e.preventDefault(); navegarA('credito'); };
   document.getElementById('btnAhorros').onclick = (e) => { e.preventDefault(); navegarA('ahorro'); };
+  document.getElementById('btnPlanos').onclick = (e) => { e.preventDefault(); navegarA('planos'); };
 
   // ==================== CRÉDITOS ====================
   const plazosMeses = [12,18,24,36,48,60,72,84,96,108,120];
