@@ -487,7 +487,7 @@
     /* Lienzo */
     .medidor-wrap .app{ display:flex; height:480px; }
     .medidor-wrap main{ flex:1 1 auto; min-width:0; position:relative; background:var(--bg-deep); overflow:hidden; }
-    .medidor-wrap canvas{ display:block; cursor:crosshair; }
+    .medidor-wrap canvas{ display:block; cursor:crosshair; touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
     .medidor-wrap main.pan-mode canvas{ cursor:grab; touch-action:none; }
     .medidor-wrap main.panning canvas{ cursor:grabbing; }
     
@@ -1401,11 +1401,12 @@
 
   document.getElementById('btnHelp').onclick = ()=>{
     showModal({ showCancel:false, okText:'Entendido', message:
-"✏️ DIBUJAR\nHaz clic para colocar puntos. Clic sobre el punto 0 (verde) cierra la figura, o usa \"Cerrar\". Clic derecho sobre un punto lo quita.\n\n"+
-"🛠️ EDITAR\nSelecciona un área con clic y:\n• arrastra un punto para moverlo\n• arrastra el cuadro 🟧 de una línea para agregar un punto\n• arrastra el círculo 🟢 de una curva para darle forma\n• doble clic en una línea la curva o la vuelve recta\n• clic derecho sobre un punto lo elimina\n\n"+
-"🖐️ MOVER LA VISTA\nActiva \"Mover\" y arrastra (también con el dedo). O mantén presionada la rueda del mouse.\n\n"+
-"🔍 ZOOM\nRueda del mouse, botones + / − o pellizcar con dos dedos.\n\n"+
-"📏 LONGITUD EXACTA\nDoble clic sobre la medida de una línea.\n\n"+
+"✏️ DIBUJAR\nToca (o haz clic) para colocar cada punto. Toca el punto 0 (verde) o usa \"Cerrar\" para cerrar la figura. También cierra con doble toque.\n\n"+
+"🛠️ EDITAR\nToca un área para seleccionarla y luego:\n• arrastra un punto para moverlo\n• arrastra el cuadro 🟧 de una línea para agregar un punto\n• arrastra el círculo 🟢 de una curva para darle forma\n• doble toque en una línea la curva o la vuelve recta\n• mantén presionado un punto (o clic derecho) para eliminarlo\n\n"+
+"📏 LONGITUD EXACTA\nToca la medida de una línea y escribe los metros.\n\n"+
+"🖐️ MOVER LA VISTA\nArrastra con un dedo sobre un espacio vacío, o usa el modo \"Mover\".\n\n"+
+"🔍 ZOOM\nPellizca con dos dedos, rueda del mouse o botones + / −.\n\n"+
+"🧭 BRÚJULA\nArrástrala y colócala donde quieras. Doble toque sobre ella la regresa a la esquina.\n\n"+
 "↩️ Ctrl+Z deshace, Ctrl+Y rehace." });
   };
 
@@ -1429,7 +1430,7 @@
   const MAX_HISTORY = 60;
 
   function makePlano(name){
-    return { id:'plano_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), name, northAngle:0, shapeCounter:0, shapes:[] };
+    return { id:'plano_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), name, northAngle:0, shapeCounter:0, shapes:[], brujula:null };
   }
   function getCurrentPlano(){ return planos.find(p=>p.id===currentPlanoId) || null; }
   function getShapes(){ const p=getCurrentPlano(); return p ? p.shapes : []; }
@@ -1567,7 +1568,7 @@
   }
 
   function drawCompass(r){
-    const rad = 26, cx = r.width-46, cy = 100;   // debajo de la barra de herramientas
+    const rad = 26, pb = posBrujula(r), cx = pb.x, cy = pb.y;   // se puede arrastrar
     ctx.save();
     ctx.translate(cx,cy);
     ctx.strokeStyle = getCss('--border');
@@ -1776,7 +1777,7 @@
     return snapEnabled ? { x:snap(m.x,snapStep), y:snap(m.y,snapStep) } : m;
   }
   function hitTestVertex(e, includeShape){
-    const {x,y} = evtXY(e), R = 10;
+    const {x,y} = evtXY(e), R = radioToque();
     for(let i=0;i<currentPoints.length;i++){
       const s = meterToScreen(currentPoints[i].x,currentPoints[i].y);
       if(Math.hypot(s.x-x,s.y-y) <= R) return { source:'current', index:i };
@@ -1798,11 +1799,11 @@
       const a = shape.points[i], b = shape.points[(i+1)%n], c = shape.curves ? shape.curves[i] : null;
       const hp = c ? quadPointAt(a,b,c,0.5) : {x:(a.x+b.x)/2, y:(a.y+b.y)/2};
       const s = meterToScreen(hp.x,hp.y);
-      if(Math.hypot(s.x-x,s.y-y) <= 10) return { shapeId:shape.id, edgeIndex:i, curved:!!c };
+      if(Math.hypot(s.x-x,s.y-y) <= radioToque()) return { shapeId:shape.id, edgeIndex:i, curved:!!c };
     }
     return null;
   }
-  function dentroEtiqueta(x,y,et){ return x>=et.x-et.w/2 && x<=et.x+et.w/2 && y>=et.y-8 && y<=et.y+8; }
+  function dentroEtiqueta(x,y,et){ const h = esToque() ? 8 : 0; return x>=et.x-et.w/2-h && x<=et.x+et.w/2+h && y>=et.y-8-h && y<=et.y+8+h; }
   function hitTestEdgeLabel(e){
     const {x,y} = evtXY(e);
     for(let i=0;i<currentPoints.length-1;i++){
@@ -1833,7 +1834,7 @@
       const smp = [a].concat(edgeCurveSamples(a,b,c,16));
       for(let k=0;k<smp.length-1;k++){
         const p1 = meterToScreen(smp[k].x,smp[k].y), p2 = meterToScreen(smp[k+1].x,smp[k+1].y);
-        if(pointToSegmentDist(x,y,p1.x,p1.y,p2.x,p2.y) < 7) return { shapeId:shape.id, edgeIndex:i };
+        if(pointToSegmentDist(x,y,p1.x,p1.y,p2.x,p2.y) < (esToque() ? 16 : 7)) return { shapeId:shape.id, edgeIndex:i };
       }
     }
     return null;
@@ -1872,111 +1873,255 @@
     refrescar(); showToast('Longitud actualizada: '+nl.toFixed(2)+' m');
   }
 
-  // ================= MOUSE =================
-  canvas.addEventListener('mousedown', e=>{
-    if(mode==='pan' || e.button===1){
-      e.preventDefault();
-      isPanning = true; panStart = { x:e.clientX-panX, y:e.clientY-panY };
+  // ================= PUNTERO: MOUSE, DEDO Y LÁPIZ =================
+  // Un solo manejo para todo:
+  //  • tocar / clic            → coloca un punto (Dibujar) o selecciona un área (Editar)
+  //  • arrastrar un punto      → lo mueve
+  //  • arrastrar en vacío      → mueve la vista (con un dedo o con el mouse)
+  //  • dos dedos               → zoom y mover la vista a la vez
+  //  • doble toque             → cierra la figura / curva o endereza una línea
+  //  • mantener presionado     → elimina el punto (igual que clic derecho)
+  //  • tocar una medida        → escribir la longitud exacta
+  //  • arrastrar la brújula    → colocarla donde quieras (doble toque la regresa a la esquina)
+  let tipoPuntero = 'mouse';
+  const esToque = () => tipoPuntero !== 'mouse';
+  const punteros = new Map();
+  let gesto = null, accion = null, toqueLargo = null, ultimoTap = null;
+
+  function radioToque(){ return esToque() ? 22 : 10; }
+
+  function posBrujula(r){
+    const b = getCurrentPlano() && getCurrentPlano().brujula;
+    if(b) return meterToScreen(b.x, b.y);
+    return { x: r.width - 46, y: 100 };
+  }
+  function hitTestBrujula(e){
+    const {x,y} = evtXY(e), p = posBrujula(mainWrap.getBoundingClientRect());
+    return Math.hypot(p.x-x, p.y-y) <= 34 + (esToque() ? 8 : 0);
+  }
+
+  function cancelarAccion(){
+    clearTimeout(toqueLargo);
+    if(accion && accion.movido && accion.tipo !== 'pan') refrescar();
+    accion = null; draggingVertex = null; draggingCurve = null;
+  }
+
+  canvas.addEventListener('pointerdown', e=>{
+    if(modalBackdrop.style.display==='flex') return;
+    tipoPuntero = e.pointerType || 'mouse';
+    if(e.pointerType==='mouse' && e.button===2) return;   // clic derecho: lo atiende 'contextmenu'
+    e.preventDefault();
+    try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
+    const p = evtXY(e);
+    punteros.set(e.pointerId, p);
+
+    if(punteros.size === 2){
+      cancelarAccion();
+      const [a,b] = [...punteros.values()];
+      gesto = { dist: Math.hypot(a.x-b.x, a.y-b.y), cx:(a.x+b.x)/2, cy:(a.y+b.y)/2 };
+      mouseMeter = null;
+      return;
+    }
+    if(punteros.size > 2) return;
+
+    const base = { id:e.pointerId, x0:p.x, y0:p.y, movido:false, px:panX, py:panY };
+    if(e.button===1 || mode==='pan'){
+      accion = { ...base, tipo:'pan' };
       mainWrap.classList.add('panning');
       return;
     }
+    if(hitTestBrujula(e)){ accion = { ...base, tipo:'brujula' }; return; }
+
     if(mode==='draw'){
       const v = hitTestVertex(e,false);
-      if(v){ draggingVertex = v; justDragged = false; mainWrap.classList.add('panning'); }
-      return;
-    }
-    if(mode==='edit'){
+      accion = v ? { ...base, tipo:'vertice', hit:v } : { ...base, tipo:'vacio' };
+    } else {
       const v = hitTestVertex(e,true);
-      if(v && v.source==='shape'){ pushHistory(); draggingVertex = v; justDragged = false; mainWrap.classList.add('panning'); return; }
-      const m = hitTestMidHandle(e);
-      if(m){
-        const shape = getShapes().find(s=>s.id===m.shapeId);
-        if(!shape) return;
-        if(m.curved){ draggingCurve = { shapeId:shape.id, edgeIndex:m.edgeIndex }; justDragged = false; }
-        else {
-          pushHistory();
-          const pos = m.edgeIndex+1;
-          if(!shape.curves || shape.curves.length!==shape.points.length) shape.curves = shape.points.map(()=>null);
-          shape.points.splice(pos,0,getMouseMeter(e));
-          shape.curves.splice(pos,0,null);
-          draggingVertex = { source:'shape', shapeId:shape.id, index:pos };
-          justDragged = true;
-        }
-        mainWrap.classList.add('panning');
+      if(v && v.source==='shape') accion = { ...base, tipo:'vertice', hit:v };
+      else {
+        const m = hitTestMidHandle(e);
+        accion = m ? { ...base, tipo:'medio', hit:m } : { ...base, tipo:'vacio' };
       }
+    }
+
+    // Mantener presionado un punto con el dedo = eliminarlo
+    if(esToque() && accion.tipo==='vertice'){
+      clearTimeout(toqueLargo);
+      const ev = { clientX:e.clientX, clientY:e.clientY };
+      toqueLargo = setTimeout(()=>{
+        if(accion && !accion.movido){
+          accion = null;
+          if(navigator.vibrate) navigator.vibrate(30);
+          accionSecundaria(ev);
+        }
+      }, 550);
     }
   });
-  window.addEventListener('mousemove', e=>{
-    if(isPanning && panStart){ panX = e.clientX-panStart.x; panY = e.clientY-panStart.y; draw(); return; }
-    if(draggingVertex){
-      justDragged = true;
+
+  function iniciarArrastre(e){
+    const a = accion;
+    if(a.tipo==='vacio'){ a.tipo = 'pan'; mainWrap.classList.add('panning'); return; }
+    if(a.tipo==='brujula'){ pushHistory(); return; }
+    if(a.tipo==='vertice'){
+      if(a.hit.source==='shape') pushHistory();
+      draggingVertex = a.hit; mouseMeter = null;
+      return;
+    }
+    if(a.tipo==='medio'){
+      const shape = getShapes().find(s=>s.id===a.hit.shapeId);
+      if(!shape){ accion = null; return; }
+      pushHistory();
+      if(!shape.curves || shape.curves.length!==shape.points.length) shape.curves = shape.points.map(()=>null);
+      if(a.hit.curved){
+        a.tipo = 'curva';
+        draggingCurve = { shapeId:shape.id, edgeIndex:a.hit.edgeIndex };
+      } else {
+        const pos = a.hit.edgeIndex+1;
+        shape.points.splice(pos,0,getMouseMeter(e));
+        shape.curves.splice(pos,0,null);
+        a.tipo = 'vertice';
+        a.hit = { source:'shape', shapeId:shape.id, index:pos };
+        draggingVertex = a.hit;
+      }
+    }
+  }
+
+  canvas.addEventListener('pointermove', e=>{
+    const p = evtXY(e);
+    if(punteros.has(e.pointerId)) punteros.set(e.pointerId, p);
+
+    if(gesto && punteros.size >= 2){
+      const [a,b] = [...punteros.values()];
+      const d = Math.hypot(a.x-b.x, a.y-b.y), cx = (a.x+b.x)/2, cy = (a.y+b.y)/2;
+      const antes = screenToMeter(gesto.cx, gesto.cy);
+      pxPerMeter = Math.min(400, Math.max(6, pxPerMeter * (d/(gesto.dist||d))));
+      panX = cx - antes.x*pxPerMeter; panY = cy - antes.y*pxPerMeter;
+      gesto = { dist:d, cx, cy };
+      draw();
+      return;
+    }
+
+    if(!accion || accion.id !== e.pointerId){
+      if(e.pointerType==='mouse' && mode==='draw'){ mouseMeter = getMouseMeter(e); draw(); }
+      return;
+    }
+
+    const dx = p.x-accion.x0, dy = p.y-accion.y0;
+    if(!accion.movido){
+      if(Math.hypot(dx,dy) < (esToque() ? 10 : 4)){
+        if(e.pointerType==='mouse' && mode==='draw'){ mouseMeter = getMouseMeter(e); draw(); }
+        return;
+      }
+      accion.movido = true;
+      clearTimeout(toqueLargo);
+      iniciarArrastre(e);
+      if(!accion) return;
+    }
+
+    const a = accion;
+    if(a.tipo==='pan'){ panX = a.px+dx; panY = a.py+dy; draw(); return; }
+    if(a.tipo==='brujula'){ getCurrentPlano().brujula = screenToMeter(p.x, p.y); draw(); return; }
+    if(a.tipo==='vertice'){
       const m = getMouseMeter(e);
-      if(draggingVertex.source==='current') currentPoints[draggingVertex.index] = m;
-      else { const s = getShapes().find(x=>x.id===draggingVertex.shapeId); if(s) s.points[draggingVertex.index] = m; }
+      if(a.hit.source==='current') currentPoints[a.hit.index] = m;
+      else { const s = getShapes().find(x=>x.id===a.hit.shapeId); if(s) s.points[a.hit.index] = m; }
       draw(); return;
     }
-    if(draggingCurve){
-      if(!justDragged){ pushHistory(); justDragged = true; }
+    if(a.tipo==='curva'){
       const s = getShapes().find(x=>x.id===draggingCurve.shapeId);
       if(s){
-        const a = s.points[draggingCurve.edgeIndex], b = s.points[(draggingCurve.edgeIndex+1)%s.points.length];
-        const M = {x:(a.x+b.x)/2, y:(a.y+b.y)/2}, H = getMouseMeter(e);
+        const A = s.points[draggingCurve.edgeIndex], B = s.points[(draggingCurve.edgeIndex+1)%s.points.length];
+        const M = { x:(A.x+B.x)/2, y:(A.y+B.y)/2 }, H = getMouseMeter(e);
         s.curves[draggingCurve.edgeIndex] = { x:2*H.x-M.x, y:2*H.y-M.y };
       }
-      draw(); return;
-    }
-    if(mode==='draw'){
-      const r = canvas.getBoundingClientRect();
-      mouseMeter = (e.clientX>=r.left && e.clientX<=r.right && e.clientY>=r.top && e.clientY<=r.bottom) ? getMouseMeter(e) : null;
       draw();
     }
   });
-  window.addEventListener('mouseup', ()=>{
-    isPanning = false; panStart = null;
-    mainWrap.classList.remove('panning');
-    if(draggingVertex || draggingCurve){ draggingVertex = null; draggingCurve = null; refrescar(); }
-  });
 
-  canvas.addEventListener('click', e=>{
-    if(justDragged){ justDragged = false; return; }
+  function finPuntero(e, cancelado){
+    punteros.delete(e.pointerId);
+    if(gesto){
+      if(punteros.size < 2) gesto = null;
+      if(!punteros.size) mainWrap.classList.remove('panning');
+      return;
+    }
+    clearTimeout(toqueLargo);
+    if(!accion || accion.id !== e.pointerId) return;
+    const a = accion;
+    accion = null; draggingVertex = null; draggingCurve = null;
+    mainWrap.classList.remove('panning');
+
+    if(cancelado || a.movido){ if(a.tipo!=='pan') refrescar(); return; }
+    if(a.tipo==='pan') return;
+
+    const ahora = Date.now();
+    const doble = ultimoTap && (ahora-ultimoTap.t) < 350 &&
+                  Math.hypot(a.x0-ultimoTap.x, a.y0-ultimoTap.y) < (esToque() ? 30 : 10);
+    tocar(e, a);
+    if(doble){ ultimoTap = null; dobleToque(e); }
+    else ultimoTap = { t:ahora, x:a.x0, y:a.y0 };
+  }
+  canvas.addEventListener('pointerup', e=>finPuntero(e,false));
+  // Al levantar el dedo el teléfono genera un "clic" automático que caería sobre la
+  // ventana de diálogo recién abierta y la cerraría. Se bloquea aquí.
+  canvas.addEventListener('touchend', e=>{ if(e.cancelable) e.preventDefault(); }, {passive:false});
+  canvas.addEventListener('pointercancel', e=>finPuntero(e,true));
+  canvas.addEventListener('pointerleave', e=>{ if(e.pointerType==='mouse' && !accion){ mouseMeter = null; draw(); } });
+
+  // Un toque o clic sin arrastrar
+  function tocar(e, a){
+    if(a.tipo==='brujula') return;
     if(mode==='draw'){
-      const v = hitTestVertex(e,false);
-      if(v){ if(v.index===0 && currentPoints.length>=3) closeCurrentShape(); return; }
+      if(a.tipo==='vertice'){
+        if(a.hit.source==='current' && a.hit.index===0 && currentPoints.length>=3) closeCurrentShape();
+        return;
+      }
+      const eh = hitTestEdgeLabel(e);
+      if(eh && eh.source==='current'){ editEdgeLength(eh); return; }
       currentPoints.push(getMouseMeter(e));
       updateButtons(); draw();
       return;
     }
     if(mode==='edit'){
-      const v = hitTestVertex(e,true);
-      if((v && v.source==='shape') || hitTestMidHandle(e) || hitTestEdgeLabel(e)) return;
+      if(a.tipo==='vertice') return;
+      const eh = hitTestEdgeLabel(e);
+      if(a.tipo==='medio'){ if(eh && eh.source==='shape') editEdgeLength(eh); return; }
+      if(eh && eh.source==='shape'){ editEdgeLength(eh); return; }
       selectedId = hitTestShapeBody(e);
       updateButtons(); draw();
     }
-  });
+  }
 
-  canvas.addEventListener('dblclick', e=>{
-    e.preventDefault();
+  // Doble toque o doble clic
+  function dobleToque(e){
+    if(hitTestBrujula(e)){
+      const pl = getCurrentPlano();
+      if(pl && pl.brujula){ pushHistory(); pl.brujula = null; draw(); showToast('Brújula regresada a la esquina'); }
+      return;
+    }
     if(mode==='edit'){
       const mh = hitTestMidHandle(e);
       if(mh && mh.curved){ toggleEdgeCurve(mh.shapeId, mh.edgeIndex); return; }
       const lh = hitTestEdgeLine(e);
       if(lh){ toggleEdgeCurve(lh.shapeId, lh.edgeIndex); return; }
     }
-    const eh = hitTestEdgeLabel(e);
-    if(eh && ((eh.source==='current' && mode==='draw') || (eh.source==='shape' && mode==='edit'))){ editEdgeLength(eh); return; }
     if(mode==='draw' && currentPoints.length>=3) closeCurrentShape();
-  });
+  }
 
-  canvas.addEventListener('contextmenu', e=>{
-    e.preventDefault();
+  // Clic derecho o mantener presionado
+  function accionSecundaria(e){
     if(mode==='edit'){
       const v = hitTestVertex(e,true);
       if(v && v.source==='shape') deleteVertexConfirm(v.shapeId, v.index);
     }
     if(mode==='draw'){
       const v = hitTestVertex(e,false);
-      if(v && currentPoints.length>1){ currentPoints.splice(v.index,1); updateButtons(); draw(); }
+      if(v && currentPoints.length>1){ currentPoints.splice(v.index,1); updateButtons(); draw(); showToast('Punto quitado'); }
     }
+  }
+  canvas.addEventListener('contextmenu', e=>{
+    e.preventDefault();
+    if(tipoPuntero==='mouse') accionSecundaria(e);
   });
 
   canvas.addEventListener('wheel', e=>{
@@ -2024,43 +2169,6 @@
   }
   function cancelCurrent(){ if(!currentPoints.length) return; currentPoints = []; mouseMeter = null; updateButtons(); draw(); }
   function undoPoint(){ if(!currentPoints.length) return; currentPoints.pop(); updateButtons(); draw(); }
-
-  // ================= TÁCTIL =================
-  let toque = null;
-  const pt = t => { const r = canvas.getBoundingClientRect(); return { x:t.clientX-r.left, y:t.clientY-r.top }; };
-  canvas.addEventListener('touchstart', e=>{
-    if(e.touches.length===2){
-      e.preventDefault();
-      const a = pt(e.touches[0]), b = pt(e.touches[1]);
-      toque = { tipo:'pellizco', dist:Math.hypot(a.x-b.x,a.y-b.y), cx:(a.x+b.x)/2, cy:(a.y+b.y)/2 };
-    } else if(e.touches.length===1 && mode==='pan'){
-      e.preventDefault();
-      const p = pt(e.touches[0]);
-      toque = { tipo:'arrastre', x:p.x, y:p.y };
-      mainWrap.classList.add('panning');
-    }
-  }, {passive:false});
-  canvas.addEventListener('touchmove', e=>{
-    if(!toque) return;
-    e.preventDefault();
-    if(toque.tipo==='pellizco' && e.touches.length===2){
-      const a = pt(e.touches[0]), b = pt(e.touches[1]);
-      const d = Math.hypot(a.x-b.x,a.y-b.y), cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
-      const antes = screenToMeter(toque.cx, toque.cy);
-      pxPerMeter = Math.min(400, Math.max(6, pxPerMeter*(d/(toque.dist||d))));
-      panX = cx-antes.x*pxPerMeter; panY = cy-antes.y*pxPerMeter;
-      Object.assign(toque, {dist:d, cx, cy});
-      draw();
-    } else if(toque.tipo==='arrastre' && e.touches.length===1){
-      const p = pt(e.touches[0]);
-      panX += p.x-toque.x; panY += p.y-toque.y;
-      toque.x = p.x; toque.y = p.y;
-      draw();
-    }
-  }, {passive:false});
-  const finToque = e => { if(!e.touches.length){ toque = null; mainWrap.classList.remove('panning'); } };
-  canvas.addEventListener('touchend', finToque);
-  canvas.addEventListener('touchcancel', finToque);
 
   // ================= BOTONES =================
   function setMode(m){
@@ -2128,6 +2236,7 @@
       p.northAngle = d.northAngle || 0;
       p.shapes = (d.shapes || []).map(s=>({ ...s, curves: Array.isArray(s.curves) && s.curves.length===s.points.length ? s.curves : s.points.map(()=>null) }));
       p.shapeCounter = d.shapeCounter || p.shapes.length;
+      p.brujula = d.brujula || null;
       planos = [p]; currentPlanoId = p.id;
       selectedId = null; currentPoints = [];
       limpiarHistorial(); centerView(); refrescar();
@@ -2145,6 +2254,7 @@
       selectedId = null; currentPoints = [];
       const pts = [];
       plano.shapes.forEach(s => flattenShape(s.points, s.curves).forEach(p=>pts.push(p)));
+      if(plano.brujula && pts.length) pts.push(plano.brujula);
       if(pts.length){
         const xs = pts.map(p=>p.x), ys = pts.map(p=>p.y);
         const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
