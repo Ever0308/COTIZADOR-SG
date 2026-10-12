@@ -357,9 +357,12 @@
     .module.active-module { display: block; }
     #module-planos.active-module { display: flex; flex-direction: column; height: 100vh; }
     #module-planos .header-modern { flex-shrink: 0; }
-    #module-planos iframe {
-      flex: 1; width: 100%; border: none; display: block; background: #0A1B2E;
+    #module-planos .medidor-wrap {
+      flex: 1; min-height: 0; width: 100%;
+      display: flex; flex-direction: column;
+      border: none; border-radius: 0;
     }
+    #module-planos .medidor-wrap .app { flex: 1; height: auto; min-height: 0; }
 
     /* 🚨 ALERTA PERSONALIZADA */
     .custom-alert-overlay {
@@ -440,6 +443,125 @@
 
     @media screen and (-webkit-min-device-pixel-ratio: 0) {
       input, select { font-size: 16px !important; }
+    }
+
+    /* =====================================================================
+       CROQUIS DEL TERRENO — componente independiente
+       Todo el estilo está delimitado a .medidor-wrap para que no choque
+       con el CSS del proyecto donde lo pegues.
+       ===================================================================== */
+    .medidor-wrap{
+      /* Colores institucionales */
+      --azul:#1F3864;
+      --amarillo:#FFC000;
+      --rojo:#C0392B;
+    
+      /* Variables que lee el propio JS del croquis */
+      --bg-deep:#ffffff;
+      --grid-minor:#e6eaef;
+      --grid-major:#cdd6df;
+      --stroke:#1F3864;
+      --stroke-dim:#5b7291;
+      --accent:#1F3864;
+      --accent-2:#c9950a;
+      --accent-dim:#8a6a10;
+      --ok:#0f7b3d;
+      --danger:#C0392B;
+      --text:#1F3864;
+      --text-dim:#647b8f;
+      --border:#cdd6df;
+      --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", "Consolas", monospace;
+      --sans: Calibri, Arial, sans-serif;
+      --shadow-lg: 0 6px 18px rgba(31,56,100,.18);
+    
+      color:var(--text);
+      font-family:var(--sans);
+      border:1px solid var(--border);
+      border-radius:6px;
+      overflow:hidden;
+      background:var(--bg-deep);
+    }
+    .medidor-wrap *{ box-sizing:border-box; }
+    .medidor-wrap button{ font-family:inherit; cursor:pointer; }
+    
+    /* Lienzo */
+    .medidor-wrap .app{ display:flex; height:480px; }
+    .medidor-wrap main{ flex:1 1 auto; min-width:0; position:relative; background:var(--bg-deep); overflow:hidden; }
+    .medidor-wrap canvas{ display:block; cursor:crosshair; }
+    .medidor-wrap main.pan-mode canvas{ cursor:grab; touch-action:none; }
+    .medidor-wrap main.panning canvas{ cursor:grabbing; }
+    
+    /* Barra flotante */
+    .medidor-wrap .cq-bar{
+      position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:5;
+      display:flex; align-items:center; gap:4px; padding:4px;
+      background:rgba(255,255,255,.96); border:1px solid var(--border); border-radius:999px;
+      box-shadow:0 2px 10px rgba(31,56,100,.12); max-width:calc(100% - 24px); overflow-x:auto;
+    }
+    .medidor-wrap .cq-group{ display:flex; align-items:center; gap:2px; padding:0 4px; }
+    .medidor-wrap .cq-group + .cq-group,
+    .medidor-wrap .cq-group + .cq-total{ border-left:1px solid var(--border); }
+    .medidor-wrap .cq-bar button{
+      display:inline-flex; align-items:center; gap:5px; height:32px; min-width:32px; justify-content:center;
+      padding:0 9px; border:0; border-radius:999px; background:transparent;
+      color:var(--text); font-size:12.5px; font-weight:600; white-space:nowrap;
+    }
+    .medidor-wrap .cq-bar button:hover{ background:#eef2f7; }
+    .medidor-wrap .cq-bar button.active-mode{ background:var(--azul); color:#fff; }
+    .medidor-wrap .cq-bar button.primary{ background:var(--amarillo); color:var(--azul); }
+    .medidor-wrap .cq-bar #btnClearAll:hover,
+    .medidor-wrap .cq-bar #btnDeleteSel:not(:disabled):hover{ color:var(--danger); }
+    .medidor-wrap .cq-bar button:disabled{ opacity:.3; cursor:not-allowed; }
+    .medidor-wrap .cq-draw button:disabled{ display:none; }
+    .medidor-wrap .cq-draw:not(:has(button:not(:disabled))){ display:none; }
+    .medidor-wrap .cq-total{ padding:0 12px 0 10px; font-family:var(--mono); font-size:13px; font-weight:700; color:var(--azul); white-space:nowrap; }
+    .medidor-wrap .cq-total span{ font-weight:400; color:var(--text-dim); font-size:11px; }
+    
+    /* Zoom */
+    .medidor-wrap .zoom-controls{ position:absolute; right:12px; bottom:12px; display:flex; flex-direction:column; gap:4px; z-index:4; }
+    .medidor-wrap .zoom-controls button{
+      width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:17px; padding:0;
+      border-radius:8px; border:1px solid var(--border); color:var(--text);
+      background:rgba(255,255,255,.96); box-shadow:0 2px 8px rgba(31,56,100,.12);
+    }
+    .medidor-wrap .zoom-controls button:hover{ background:#eef2f7; }
+    
+    /* Aviso */
+    .medidor-wrap .toast{
+      position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+      background:#fff; border:1px solid var(--accent-dim); color:var(--text); font-size:12.5px;
+      padding:9px 16px; border-radius:8px; z-index:10; opacity:0; pointer-events:none;
+      transition:opacity .25s, transform .25s; box-shadow:var(--shadow-lg);
+    }
+    .medidor-wrap .toast.show{ opacity:1; transform:translateX(-50%) translateY(-4px); }
+    
+    /* Ventana de diálogo */
+    .medidor-wrap .modal-backdrop{ position:fixed; inset:0; background:rgba(4,12,20,.55); display:none; align-items:center; justify-content:center; z-index:1000; }
+    .medidor-wrap .modal-box{ width:380px; max-width:90vw; background:#f6f8fa; border:1px solid var(--accent-dim); border-radius:12px; box-shadow:var(--shadow-lg); overflow:hidden; }
+    .medidor-wrap .modal-header{ background:var(--azul); padding:11px 18px; font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#fff; border-bottom:3px solid var(--amarillo); }
+    .medidor-wrap .modal-body{ padding:18px; max-height:60vh; overflow-y:auto; }
+    .medidor-wrap .modal-message{ font-size:13.5px; line-height:1.6; margin-bottom:10px; white-space:pre-line; }
+    .medidor-wrap .modal-body input[type=text]{ width:100%; padding:7px 9px; border:1px solid var(--border); border-radius:6px; font-family:var(--mono); font-size:13px; color:var(--text); }
+    .medidor-wrap .modal-body input[type=text]:focus{ outline:none; border-color:var(--accent-dim); box-shadow:0 0 0 3px rgba(239,168,59,.12); }
+    .medidor-wrap .modal-actions{ display:flex; justify-content:flex-end; gap:8px; padding:13px 18px; background:#fff; border-top:1px solid var(--border); }
+    .medidor-wrap .modal-actions button{ min-width:84px; padding:8px 11px; border-radius:7px; border:1px solid var(--border); background:#fff; color:var(--text); font-size:12.5px; }
+    .medidor-wrap .modal-actions button.primary{ background:var(--azul); color:#fff; border-color:var(--azul); font-weight:700; }
+    
+    .medidor-wrap.croquis-falta{ border:2px solid var(--rojo) !important; }
+    
+    @media (max-width:700px){
+      .medidor-wrap .app{ height:380px; }
+      .medidor-wrap .cq-bar button span{ display:none; }
+      .medidor-wrap .cq-bar{ gap:2px; padding:3px; }
+      .medidor-wrap .cq-group{ padding:0 2px; gap:0; }
+      .medidor-wrap .cq-bar button{ min-width:30px; padding:0 6px; }
+      .medidor-wrap .cq-total{ padding:0 8px 0 6px; font-size:12px; }
+    }
+    @media print{
+      .medidor-wrap .cq-bar, .medidor-wrap .zoom-controls,
+      .medidor-wrap .toast, .medidor-wrap .modal-backdrop{ display:none !important; }
+      .medidor-wrap{ border:1px solid #000; }
+      .medidor-wrap .app{ height:380px; }
     }
   </style>
 </head>
@@ -601,10 +723,61 @@
   <div id="module-planos" class="module">
     <div class="header-modern">
       <button class="back-btn" onclick="mostrarMenu()">← Volver</button>
-      <h1>MEDIDOR DE PLANOS</h1>
+      <h1>PLANO O CROQUIS DE INMUEBLES</h1>
       <img src="logo.png" class="logo-small" onerror="this.style.display='none'" alt="logo">
     </div>
-    <iframe id="iframePlanos" src="medidor-de-superficies.html" title="Medidor de Superficies" loading="lazy"></iframe>
+    <!-- ===================== INICIO DEL CROQUIS ===================== -->
+    <div class="medidor-wrap" id="croquisWrap">
+      <div class="app">
+        <main id="mainCanvasWrap">
+          <canvas id="canvas"></canvas>
+    
+          <div class="cq-bar">
+            <div class="cq-group">
+              <button type="button" id="btnModeDraw" class="active-mode" title="Dibujar trazo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1L19 8l-3-3L5 16z"/></svg><span>Dibujar</span></button>
+              <button type="button" id="btnModeEdit" title="Mover, curvar y agregar puntos"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></svg><span>Editar</span></button>
+              <button type="button" id="btnModePan" title="Mover la vista"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5.5a1.5 1.5 0 013 0V12M11 11.5v-8a1.5 1.5 0 013 0V12M14 10.5a1.5 1.5 0 013 0V12M17 11.5a1.5 1.5 0 013 0V16a6 6 0 01-6 6h-2a6 6 0 01-4.7-2.3L4.6 16a1.6 1.6 0 012.4-2.1L8 15"/></svg><span>Mover</span></button>
+            </div>
+            <div class="cq-group">
+              <button type="button" id="btnUndoGlobal" disabled title="Deshacer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3"/></svg></button>
+              <button type="button" id="btnRedoGlobal" disabled title="Rehacer"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5M20 9H9a5 5 0 000 10h3"/></svg></button>
+            </div>
+            <div class="cq-group cq-draw">
+              <button type="button" id="btnClose" class="primary" disabled title="Cerrar figura"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg><span>Cerrar</span></button>
+              <button type="button" id="btnCancel" disabled title="Cancelar trazo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            </div>
+            <div class="cq-group">
+              <button type="button" id="btnResetView" title="Centrar vista"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></button>
+              <button type="button" id="btnDeleteSel" disabled title="Eliminar área seleccionada"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button>
+              <button type="button" id="btnClearAll" title="Borrar todas las áreas"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H9L4 15a2 2 0 010-2.8l8.2-8.2a2 2 0 012.8 0l5 5a2 2 0 010 2.8L13 19M9 10l6 6"/></svg></button>
+              <button type="button" id="btnHelp" title="Ayuda">?</button>
+            </div>
+            <div class="cq-total" id="totalArea">0.00 <span>m²</span></div>
+          </div>
+    
+          <div class="zoom-controls">
+            <button type="button" id="btnZoomIn" title="Acercar">+</button>
+            <button type="button" id="btnZoomOut" title="Alejar">−</button>
+          </div>
+          <div class="toast" id="toast"></div>
+        </main>
+      </div>
+    
+      <div class="modal-backdrop" id="modalBackdrop">
+        <div class="modal-box">
+          <div class="modal-header">Croquis</div>
+          <div class="modal-body">
+            <div class="modal-message" id="modalMessage"></div>
+            <input type="text" id="modalInput" style="display:none;">
+          </div>
+          <div class="modal-actions">
+            <button type="button" id="modalCancel">Cancelar</button>
+            <button type="button" id="modalOk" class="primary">Aceptar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- ====================== FIN DEL CROQUIS ====================== -->
   </div>
 
   <!-- 🚨 MODAL DE ALERTA PERSONALIZADO -->
@@ -1170,6 +1343,824 @@
       navigator.serviceWorker.register("service-worker.js").catch(e => console.log("SW:", e));
     });
   }
+</script>
+
+<!-- ==================== PLANO O CROQUIS DE INMUEBLES ==================== -->
+<script>
+// =====================================================================
+//  CROQUIS DEL TERRENO
+//  Dibuja áreas en metros, calcula superficie, mide lados con su
+//  orientación (N, NE, E…), permite curvas, zoom y mover la vista.
+//  Expone window.croquisAPI para usarlo desde otro proyecto.
+// =====================================================================
+(function(){
+  "use strict";
+
+  const raiz = document.getElementById('croquisWrap');
+  function getCss(v){ return getComputedStyle(raiz).getPropertyValue(v).trim(); }
+
+  // ================= VENTANAS DE DIÁLOGO =================
+  const modalBackdrop = document.getElementById('modalBackdrop');
+  const modalMessage = document.getElementById('modalMessage');
+  const modalInput = document.getElementById('modalInput');
+  const modalOk = document.getElementById('modalOk');
+  const modalCancel = document.getElementById('modalCancel');
+
+  function showModal({ message, showInput=false, defaultValue='', showCancel=true, okText='Aceptar' }){
+    return new Promise(resolve=>{
+      modalMessage.textContent = message;
+      modalInput.style.display = showInput ? 'block' : 'none';
+      if(showInput) modalInput.value = defaultValue;
+      modalCancel.style.display = showCancel ? 'inline-block' : 'none';
+      modalOk.textContent = okText;
+      modalBackdrop.style.display = 'flex';
+      const focusEl = showInput ? modalInput : modalOk;
+      setTimeout(()=>{ focusEl.focus(); if(focusEl.select) focusEl.select(); }, 30);
+
+      function cleanup(r){
+        modalBackdrop.style.display = 'none';
+        modalOk.removeEventListener('click', onOk);
+        modalCancel.removeEventListener('click', onCancel);
+        modalInput.removeEventListener('keydown', onKey);
+        modalBackdrop.removeEventListener('click', onBackdrop);
+        resolve(r);
+      }
+      function onOk(){ cleanup({confirmed:true, value: modalInput.value}); }
+      function onCancel(){ cleanup({confirmed:false, value:null}); }
+      function onKey(e){ if(e.key==='Enter'){ e.preventDefault(); onOk(); } if(e.key==='Escape') onCancel(); }
+      function onBackdrop(e){ if(e.target===modalBackdrop && showCancel) onCancel(); }
+      modalOk.addEventListener('click', onOk);
+      modalCancel.addEventListener('click', onCancel);
+      modalInput.addEventListener('keydown', onKey);
+      modalBackdrop.addEventListener('click', onBackdrop);
+    });
+  }
+  const sgAlert   = m => showModal({message:m, showCancel:false, okText:'Entendido'}).then(()=>{});
+  const sgConfirm = m => showModal({message:m}).then(r=>r.confirmed);
+  const sgPrompt  = (m,d) => showModal({message:m, showInput:true, defaultValue:d||''}).then(r=>r.confirmed ? r.value : null);
+
+  document.getElementById('btnHelp').onclick = ()=>{
+    showModal({ showCancel:false, okText:'Entendido', message:
+"✏️ DIBUJAR\nHaz clic para colocar puntos. Clic sobre el punto 0 (verde) cierra la figura, o usa \"Cerrar\". Clic derecho sobre un punto lo quita.\n\n"+
+"🛠️ EDITAR\nSelecciona un área con clic y:\n• arrastra un punto para moverlo\n• arrastra el cuadro 🟧 de una línea para agregar un punto\n• arrastra el círculo 🟢 de una curva para darle forma\n• doble clic en una línea la curva o la vuelve recta\n• clic derecho sobre un punto lo elimina\n\n"+
+"🖐️ MOVER LA VISTA\nActiva \"Mover\" y arrastra (también con el dedo). O mantén presionada la rueda del mouse.\n\n"+
+"🔍 ZOOM\nRueda del mouse, botones + / − o pellizcar con dos dedos.\n\n"+
+"📏 LONGITUD EXACTA\nDoble clic sobre la medida de una línea.\n\n"+
+"↩️ Ctrl+Z deshace, Ctrl+Y rehace." });
+  };
+
+  // ================= ESTADO =================
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const mainWrap = document.getElementById('mainCanvasWrap');
+
+  let pxPerMeter = 40, panX = 0, panY = 0;
+  const snapEnabled = true, snapStep = 0.5;
+  let mode = 'draw';
+  let currentPoints = [], mouseMeter = null, selectedId = null;
+  let isPanning = false, panStart = null;
+  let draggingVertex = null, draggingCurve = null, justDragged = false;
+
+  const PALETTE = ['#F2A93B','#6FCF97','#5DB7DE','#E8695A','#C792EA','#F2E38C','#7FDBCA','#E39FF6'];
+
+  // Un "plano" = un croquis. Por defecto hay uno; la API permite tener varios.
+  let planos = [], currentPlanoId = null;
+  let undoStack = [], redoStack = [];
+  const MAX_HISTORY = 60;
+
+  function makePlano(name){
+    return { id:'plano_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), name, northAngle:0, shapeCounter:0, shapes:[] };
+  }
+  function getCurrentPlano(){ return planos.find(p=>p.id===currentPlanoId) || null; }
+  function getShapes(){ const p=getCurrentPlano(); return p ? p.shapes : []; }
+  function setShapes(a){ const p=getCurrentPlano(); if(p) p.shapes = a; }
+  function getNorthAngle(){ const p=getCurrentPlano(); return p ? p.northAngle : 0; }
+
+  // Avisa al proyecto anfitrión cada vez que cambia el croquis
+  function notificar(){
+    raiz.dispatchEvent(new CustomEvent('croquis:cambio', { detail: { areaTotal: areaTotal(), areas: getShapes().length } }));
+  }
+
+  // ================= HISTORIAL =================
+  function snapshotState(){ return JSON.stringify({ planos, currentPlanoId }); }
+  function pushHistory(){
+    undoStack.push(snapshotState());
+    if(undoStack.length>MAX_HISTORY) undoStack.shift();
+    redoStack = [];
+    updateUndoRedoButtons();
+  }
+  function restoreSnapshot(snap){
+    const d = JSON.parse(snap);
+    planos = d.planos; currentPlanoId = d.currentPlanoId;
+    selectedId = null; currentPoints = []; mouseMeter = null;
+    refrescar();
+  }
+  function undo(){
+    if(!undoStack.length) return;
+    redoStack.push(snapshotState());
+    restoreSnapshot(undoStack.pop());
+    updateUndoRedoButtons(); showToast('Deshecho');
+  }
+  function redo(){
+    if(!redoStack.length) return;
+    undoStack.push(snapshotState());
+    restoreSnapshot(redoStack.pop());
+    updateUndoRedoButtons(); showToast('Rehecho');
+  }
+  function updateUndoRedoButtons(){
+    document.getElementById('btnUndoGlobal').disabled = undoStack.length===0 && currentPoints.length===0;
+    document.getElementById('btnRedoGlobal').disabled = redoStack.length===0;
+  }
+
+  // ================= TAMAÑO DEL LIENZO =================
+  let vistaCentrada = false;
+  function resizeCanvas(){
+    const r = mainWrap.getBoundingClientRect();
+    if(!r.width || !r.height) return;          // módulo oculto: no hay nada que medir
+    if(!vistaCentrada){ panX = r.width/2; panY = r.height/2; vistaCentrada = true; }
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = r.width * dpr; canvas.height = r.height * dpr;
+    canvas.style.width = r.width+'px'; canvas.style.height = r.height+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    draw();
+  }
+  window.addEventListener('resize', resizeCanvas);
+  if(window.ResizeObserver) new ResizeObserver(resizeCanvas).observe(mainWrap);
+  function centerView(){ const r = mainWrap.getBoundingClientRect(); if(!r.width) return; panX = r.width/2; panY = r.height/2; }
+
+  // ================= COORDENADAS =================
+  const screenToMeter = (sx,sy) => ({ x:(sx-panX)/pxPerMeter, y:(sy-panY)/pxPerMeter });
+  const meterToScreen = (mx,my) => ({ x:mx*pxPerMeter+panX, y:my*pxPerMeter+panY });
+  const snap = (v,step) => Math.round(v/step)*step;
+
+  // ================= GEOMETRÍA =================
+  const dist = (a,b) => Math.hypot(b.x-a.x, b.y-a.y);
+  function polygonArea(pts){
+    let s=0; for(let i=0;i<pts.length;i++){ const a=pts[i], b=pts[(i+1)%pts.length]; s += a.x*b.y - b.x*a.y; }
+    return Math.abs(s/2);
+  }
+  function polygonPerimeter(pts){ let p=0; for(let i=0;i<pts.length;i++) p += dist(pts[i], pts[(i+1)%pts.length]); return p; }
+  function bearingDeg(a,b){
+    let ang = Math.atan2(b.x-a.x, -(b.y-a.y))*180/Math.PI;
+    return (ang + getNorthAngle() + 360) % 360;
+  }
+  function cardinal(d){ return ['N','NE','E','SE','S','SO','O','NO'][Math.round(d/45)%8]; }
+  function quadPointAt(a,b,c,t){ const m=1-t; return { x:m*m*a.x+2*m*t*c.x+t*t*b.x, y:m*m*a.y+2*m*t*c.y+t*t*b.y }; }
+  function edgeCurveSamples(a,b,c,steps){ if(!c) return [b]; const o=[]; for(let k=1;k<=steps;k++) o.push(quadPointAt(a,b,c,k/steps)); return o; }
+  function curveEdgeLength(a,b,c){
+    if(!c) return dist(a,b);
+    const p=[a].concat(edgeCurveSamples(a,b,c,16)); let d=0;
+    for(let i=0;i<p.length-1;i++) d += dist(p[i],p[i+1]);
+    return d;
+  }
+  function flattenShape(points, curves){
+    const out=[], n=points.length;
+    for(let i=0;i<n;i++){
+      out.push(points[i]);
+      const c = curves ? curves[i] : null;
+      if(c){ const seg = edgeCurveSamples(points[i], points[(i+1)%n], c, 14); seg.pop(); seg.forEach(p=>out.push(p)); }
+    }
+    return out;
+  }
+  const shapeArea = s => polygonArea(flattenShape(s.points, s.curves));
+  const shapePerimeter = s => polygonPerimeter(flattenShape(s.points, s.curves));
+  const areaTotal = () => getShapes().reduce((t,s)=>t+shapeArea(s),0);
+  function centroid(pts){ let x=0,y=0; pts.forEach(p=>{x+=p.x;y+=p.y;}); return {x:x/pts.length, y:y/pts.length}; }
+  function pointInPolygon(mx,my,pts){
+    let inside=false;
+    for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+      const xi=pts[i].x, yi=pts[i].y, xj=pts[j].x, yj=pts[j].y;
+      if(((yi>my)!==(yj>my)) && (mx < (xj-xi)*(my-yi)/(yj-yi)+xi)) inside=!inside;
+    }
+    return inside;
+  }
+
+  // ================= DIBUJO =================
+  function draw(){
+    const r = mainWrap.getBoundingClientRect();
+    ctx.clearRect(0,0,r.width,r.height);
+    drawGrid(r);
+    drawCompass(r);
+    getShapes().forEach(s => drawShape(s, s.id===selectedId));
+    const sel = selectedId ? getShapes().find(s=>s.id===selectedId) : null;
+    if(sel && mode==='edit') drawEditHandles(sel);
+    if(currentPoints.length) drawInProgress();
+  }
+
+  function drawGrid(r){
+    let stepM = 1;
+    if(pxPerMeter < 14) stepM = 5; else if(pxPerMeter < 28) stepM = 2;
+    const minor = stepM*pxPerMeter, majorEvery = stepM===5 ? 4 : 5;
+    ctx.lineWidth = 1;
+    for(let c=Math.floor(-panX/minor)-1; c<=Math.ceil((r.width-panX)/minor)+1; c++){
+      const x = panX + c*minor;
+      ctx.strokeStyle = c%majorEvery===0 ? getCss('--grid-major') : getCss('--grid-minor');
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,r.height); ctx.stroke();
+    }
+    for(let k=Math.floor(-panY/minor)-1; k<=Math.ceil((r.height-panY)/minor)+1; k++){
+      const y = panY + k*minor;
+      ctx.strokeStyle = k%majorEvery===0 ? getCss('--grid-major') : getCss('--grid-minor');
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(r.width,y); ctx.stroke();
+    }
+    ctx.fillStyle = getCss('--grid-major');
+    ctx.beginPath(); ctx.arc(panX,panY,3,0,Math.PI*2); ctx.fill();
+  }
+
+  function drawCompass(r){
+    const rad = 26, cx = r.width-46, cy = 100;   // debajo de la barra de herramientas
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.strokeStyle = getCss('--border');
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(0,0,rad+8,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.rotate(getNorthAngle()*Math.PI/180);
+    ctx.font = '600 11px '+getCss('--mono');
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    [['N',0],['E',90],['S',180],['O',270]].forEach(([lbl,ang])=>{
+      const a = ang*Math.PI/180, esN = lbl==='N';
+      ctx.strokeStyle = esN ? getCss('--accent') : getCss('--stroke-dim');
+      ctx.lineWidth = esN ? 2 : 1;
+      ctx.beginPath(); ctx.moveTo(Math.sin(a)*8, -Math.cos(a)*8); ctx.lineTo(Math.sin(a)*rad, -Math.cos(a)*rad); ctx.stroke();
+      ctx.fillStyle = esN ? getCss('--accent') : getCss('--text-dim');
+      ctx.fillText(lbl, Math.sin(a)*(rad+13), -Math.cos(a)*(rad+13));
+    });
+    ctx.restore();
+  }
+
+  function haloText(text,x,y,color){
+    ctx.save();
+    ctx.lineJoin='round'; ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,.95)';
+    ctx.strokeText(text,x,y);
+    ctx.fillStyle = color || '#1F3864';
+    ctx.fillText(text,x,y);
+    ctx.restore();
+  }
+
+  // Posición de la etiqueta de un lado, desplazada hacia afuera de la figura
+  function etiquetaLado(a,b,c,pts){
+    const mid = c ? quadPointAt(a,b,c,0.5) : {x:(a.x+b.x)/2, y:(a.y+b.y)/2};
+    const s = meterToScreen(mid.x,mid.y);
+    const text = curveEdgeLength(a,b,c).toFixed(2)+'m ('+cardinal(bearingDeg(a,b))+')'+(c?' 〜':'');
+    ctx.font = '600 11px '+getCss('--mono');
+    const tw = ctx.measureText(text).width;
+    if(pts && pts.length>=3){
+      const sA = meterToScreen(a.x,a.y), sB = meterToScreen(b.x,b.y);
+      let nx = -(sB.y-sA.y), ny = sB.x-sA.x;
+      const nl = Math.hypot(nx,ny) || 1; nx/=nl; ny/=nl;
+      let cx=0, cy=0; pts.forEach(q=>{ cx+=q.x; cy+=q.y; });
+      const sC = meterToScreen(cx/pts.length, cy/pts.length);
+      if((s.x-sC.x)*nx + (s.y-sC.y)*ny < 0){ nx=-nx; ny=-ny; }
+      const off = 12 + Math.abs(nx)*(tw/2);
+      s.x += nx*off; s.y += ny*off;
+    }
+    return { text, x:s.x, y:s.y, w:tw+8 };
+  }
+
+  function drawShape(shape, isSel){
+    const P = shape.points, C = shape.curves || [];
+    if(P.length < 2) return;
+    const n = P.length;
+    ctx.beginPath();
+    const s0 = meterToScreen(P[0].x,P[0].y);
+    ctx.moveTo(s0.x,s0.y);
+    for(let i=0;i<n;i++){
+      const b = P[(i+1)%n], sb = meterToScreen(b.x,b.y);
+      if(C[i]){ const sc = meterToScreen(C[i].x,C[i].y); ctx.quadraticCurveTo(sc.x,sc.y,sb.x,sb.y); }
+      else ctx.lineTo(sb.x,sb.y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = shape.color+'33'; ctx.fill();
+    ctx.strokeStyle = isSel ? getCss('--accent') : shape.color;
+    ctx.lineWidth = isSel ? 2.5 : 1.8; ctx.stroke();
+
+    P.forEach((p,i)=>{
+      const s = meterToScreen(p.x,p.y);
+      ctx.beginPath(); ctx.arc(s.x,s.y,isSel?5:3,0,Math.PI*2);
+      ctx.fillStyle = shape.color; ctx.fill();
+      if(isSel){
+        ctx.strokeStyle = getCss('--stroke'); ctx.lineWidth=1.5; ctx.stroke();
+        ctx.font='700 10px '+getCss('--mono'); ctx.textAlign='center'; ctx.textBaseline='middle';
+        haloText(String(i), s.x, s.y-14.5, '#8a6a10');
+      }
+    });
+
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    for(let i=0;i<n;i++){
+      const e = etiquetaLado(P[i], P[(i+1)%n], C[i], P);
+      haloText(e.text, e.x, e.y, isSel ? '#8a6a10' : '#1F3864');
+    }
+
+    if(n >= 3){
+      const flat = flattenShape(P,C), c = centroid(flat), sc = meterToScreen(c.x,c.y);
+      ctx.font = '700 13px '+getCss('--mono');
+      haloText(polygonArea(flat).toFixed(2)+' m²', sc.x, sc.y+1, '#1F3864');
+    }
+  }
+
+  function drawEditHandles(shape){
+    const n = shape.points.length;
+    if(n < 2) return;
+    for(let i=0;i<n;i++){
+      const a = shape.points[i], b = shape.points[(i+1)%n], c = shape.curves ? shape.curves[i] : null;
+      const hp = c ? quadPointAt(a,b,c,0.5) : {x:(a.x+b.x)/2, y:(a.y+b.y)/2};
+      const s = meterToScreen(hp.x,hp.y);
+      if(c){
+        ctx.beginPath(); ctx.arc(s.x,s.y,5.5,0,Math.PI*2);
+        ctx.fillStyle = getCss('--ok'); ctx.fill();
+        ctx.strokeStyle = getCss('--stroke'); ctx.lineWidth=1.3; ctx.stroke();
+      } else {
+        ctx.fillStyle = getCss('--accent'); ctx.fillRect(s.x-4.5,s.y-4.5,9,9);
+        ctx.strokeStyle = getCss('--stroke'); ctx.lineWidth=1.2; ctx.strokeRect(s.x-4.5,s.y-4.5,9,9);
+      }
+    }
+  }
+
+  function labelSegment(a,b){
+    const s = meterToScreen((a.x+b.x)/2, (a.y+b.y)/2);
+    haloText(dist(a,b).toFixed(2)+'m ('+cardinal(bearingDeg(a,b))+')', s.x, s.y, '#1F3864');
+  }
+
+  function drawInProgress(){
+    ctx.beginPath();
+    currentPoints.forEach((p,i)=>{ const s = meterToScreen(p.x,p.y); i ? ctx.lineTo(s.x,s.y) : ctx.moveTo(s.x,s.y); });
+    if(mouseMeter && !draggingVertex){ const s = meterToScreen(mouseMeter.x,mouseMeter.y); ctx.lineTo(s.x,s.y); }
+    ctx.strokeStyle = getCss('--accent'); ctx.lineWidth = 2;
+    ctx.setLineDash([6,4]); ctx.stroke(); ctx.setLineDash([]);
+
+    ctx.font = '600 11px '+getCss('--mono');
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    for(let i=0;i<currentPoints.length-1;i++) labelSegment(currentPoints[i], currentPoints[i+1]);
+    if(mouseMeter && currentPoints.length && !draggingVertex) labelSegment(currentPoints[currentPoints.length-1], mouseMeter);
+
+    let hoverFirst = false;
+    if(mouseMeter && currentPoints.length>=3){
+      const s0 = meterToScreen(currentPoints[0].x,currentPoints[0].y), sm = meterToScreen(mouseMeter.x,mouseMeter.y);
+      hoverFirst = Math.hypot(s0.x-sm.x, s0.y-sm.y) <= 12;
+    }
+    currentPoints.forEach((p,i)=>{
+      const s = meterToScreen(p.x,p.y), first = i===0;
+      if(first && hoverFirst){
+        ctx.beginPath(); ctx.arc(s.x,s.y,10,0,Math.PI*2);
+        ctx.strokeStyle = getCss('--ok'); ctx.lineWidth=2; ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
+      }
+      ctx.beginPath(); ctx.arc(s.x,s.y,first?5:4,0,Math.PI*2);
+      ctx.fillStyle = first ? getCss('--ok') : getCss('--accent'); ctx.fill();
+      ctx.strokeStyle = getCss('--stroke'); ctx.lineWidth=1.2; ctx.stroke();
+      ctx.font='700 10px '+getCss('--mono'); ctx.textAlign='center'; ctx.textBaseline='middle';
+      haloText(String(i), s.x, s.y-14.5, first ? getCss('--ok') : '#8a6a10');
+    });
+  }
+
+  // ================= INTERFAZ =================
+  function updateButtons(){
+    document.getElementById('btnCancel').disabled = currentPoints.length===0;
+    document.getElementById('btnClose').disabled = currentPoints.length < 3;
+    document.getElementById('btnDeleteSel').disabled = !(selectedId && getShapes().some(s=>s.id===selectedId));
+    updateUndoRedoButtons();
+  }
+  function updateTotalArea(){
+    document.getElementById('totalArea').innerHTML = areaTotal().toFixed(2)+' <span>m²</span>';
+  }
+  function refrescar(){ updateButtons(); updateTotalArea(); draw(); notificar(); }
+
+  let toastTimer = null;
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove('show'), 2400);
+  }
+
+  async function deleteShape(id){
+    const s = getShapes().find(x=>x.id===id);
+    if(!s) return;
+    if(!(await sgConfirm('¿Eliminar "'+s.name+'"?'))) return;
+    pushHistory();
+    setShapes(getShapes().filter(x=>x.id!==id));
+    if(selectedId===id) selectedId = null;
+    refrescar(); showToast('Área eliminada');
+  }
+  async function deleteVertexConfirm(shapeId, index){
+    const shape = getShapes().find(s=>s.id===shapeId);
+    if(!shape) return;
+    if(shape.points.length<=3){ await sgAlert('Un área necesita al menos 3 puntos — no se puede eliminar más.'); return; }
+    if(!(await sgConfirm('¿Eliminar el punto '+index+'? Las dos líneas que lo tocan se unirán en una sola línea recta.'))) return;
+    pushHistory();
+    shape.points.splice(index,1);
+    if(!shape.curves || shape.curves.length!==shape.points.length+1) shape.curves = shape.points.map(()=>null);
+    else shape.curves.splice(index,1);
+    const n = shape.points.length;
+    if(n) shape.curves[(index-1+n)%n] = null;
+    refrescar(); showToast('Punto eliminado');
+  }
+  function toggleEdgeCurve(shapeId, index){
+    const shape = getShapes().find(s=>s.id===shapeId);
+    if(!shape) return;
+    pushHistory();
+    if(!shape.curves || shape.curves.length!==shape.points.length) shape.curves = shape.points.map(()=>null);
+    if(shape.curves[index]){ shape.curves[index] = null; showToast('Línea vuelta a recta'); }
+    else {
+      const a = shape.points[index], b = shape.points[(index+1)%shape.points.length];
+      shape.curves[index] = { x:(a.x+b.x)/2, y:(a.y+b.y)/2 };
+      showToast('Línea convertida en curva');
+    }
+    refrescar();
+  }
+
+  // ================= DETECCIÓN DE CLICS =================
+  function evtXY(e){ const r = canvas.getBoundingClientRect(); return { x:e.clientX-r.left, y:e.clientY-r.top }; }
+  function getMouseMeter(e){
+    const {x,y} = evtXY(e);
+    const m = screenToMeter(x,y);
+    return snapEnabled ? { x:snap(m.x,snapStep), y:snap(m.y,snapStep) } : m;
+  }
+  function hitTestVertex(e, includeShape){
+    const {x,y} = evtXY(e), R = 10;
+    for(let i=0;i<currentPoints.length;i++){
+      const s = meterToScreen(currentPoints[i].x,currentPoints[i].y);
+      if(Math.hypot(s.x-x,s.y-y) <= R) return { source:'current', index:i };
+    }
+    if(includeShape && selectedId){
+      const shape = getShapes().find(s=>s.id===selectedId);
+      if(shape) for(let i=0;i<shape.points.length;i++){
+        const s = meterToScreen(shape.points[i].x,shape.points[i].y);
+        if(Math.hypot(s.x-x,s.y-y) <= R) return { source:'shape', shapeId:shape.id, index:i };
+      }
+    }
+    return null;
+  }
+  function hitTestMidHandle(e){
+    const shape = selectedId ? getShapes().find(s=>s.id===selectedId) : null;
+    if(!shape) return null;
+    const {x,y} = evtXY(e), n = shape.points.length;
+    for(let i=0;i<n;i++){
+      const a = shape.points[i], b = shape.points[(i+1)%n], c = shape.curves ? shape.curves[i] : null;
+      const hp = c ? quadPointAt(a,b,c,0.5) : {x:(a.x+b.x)/2, y:(a.y+b.y)/2};
+      const s = meterToScreen(hp.x,hp.y);
+      if(Math.hypot(s.x-x,s.y-y) <= 10) return { shapeId:shape.id, edgeIndex:i, curved:!!c };
+    }
+    return null;
+  }
+  function dentroEtiqueta(x,y,et){ return x>=et.x-et.w/2 && x<=et.x+et.w/2 && y>=et.y-8 && y<=et.y+8; }
+  function hitTestEdgeLabel(e){
+    const {x,y} = evtXY(e);
+    for(let i=0;i<currentPoints.length-1;i++){
+      if(dentroEtiqueta(x,y, etiquetaLado(currentPoints[i], currentPoints[i+1], null))) return { source:'current', index:i, closed:false };
+    }
+    const shape = selectedId ? getShapes().find(s=>s.id===selectedId) : null;
+    if(shape){
+      const n = shape.points.length;
+      for(let i=0;i<n;i++){
+        const c = shape.curves ? shape.curves[i] : null;
+        if(dentroEtiqueta(x,y, etiquetaLado(shape.points[i], shape.points[(i+1)%n], c, shape.points))) return { source:'shape', shapeId:shape.id, index:i, closed:true };
+      }
+    }
+    return null;
+  }
+  function pointToSegmentDist(px,py,x1,y1,x2,y2){
+    const dx=x2-x1, dy=y2-y1, l2=dx*dx+dy*dy;
+    let t = l2 ? ((px-x1)*dx+(py-y1)*dy)/l2 : 0;
+    t = Math.max(0,Math.min(1,t));
+    return Math.hypot(px-(x1+t*dx), py-(y1+t*dy));
+  }
+  function hitTestEdgeLine(e){
+    const shape = selectedId ? getShapes().find(s=>s.id===selectedId) : null;
+    if(!shape) return null;
+    const {x,y} = evtXY(e), n = shape.points.length;
+    for(let i=0;i<n;i++){
+      const a = shape.points[i], b = shape.points[(i+1)%n], c = shape.curves ? shape.curves[i] : null;
+      const smp = [a].concat(edgeCurveSamples(a,b,c,16));
+      for(let k=0;k<smp.length-1;k++){
+        const p1 = meterToScreen(smp[k].x,smp[k].y), p2 = meterToScreen(smp[k+1].x,smp[k+1].y);
+        if(pointToSegmentDist(x,y,p1.x,p1.y,p2.x,p2.y) < 7) return { shapeId:shape.id, edgeIndex:i };
+      }
+    }
+    return null;
+  }
+  function hitTestShapeBody(e){
+    const {x,y} = evtXY(e), m = screenToMeter(x,y), shapes = getShapes();
+    for(let i=shapes.length-1;i>=0;i--){
+      const flat = flattenShape(shapes[i].points, shapes[i].curves);
+      if(flat.length>=3 && pointInPolygon(m.x,m.y,flat)) return shapes[i].id;
+    }
+    return null;
+  }
+
+  async function editEdgeLength(hit){
+    let points;
+    if(hit.source==='current') points = currentPoints;
+    else {
+      const shape = getShapes().find(s=>s.id===hit.shapeId); if(!shape) return;
+      points = shape.points;
+      if(shape.curves && shape.curves[hit.index]){
+        await sgAlert('Esta línea es curva. Doble clic sobre ella para volverla recta antes de fijar una longitud exacta.');
+        return;
+      }
+    }
+    const n = points.length;
+    const bi = hit.closed ? (hit.index+1)%n : hit.index+1;
+    if(bi >= n) return;
+    const a = points[hit.index], b = points[bi];
+    const input = await sgPrompt('Longitud de este lado, en metros:', dist(a,b).toFixed(2));
+    if(input===null) return;
+    const nl = parseFloat(String(input).replace(',','.'));
+    if(isNaN(nl) || nl<=0){ await sgAlert('Ingresa un número válido, mayor a 0.'); return; }
+    if(hit.source==='shape') pushHistory();
+    const cur = dist(a,b) || 0.0001;
+    points[bi] = { x: a.x + (b.x-a.x)/cur*nl, y: a.y + (b.y-a.y)/cur*nl };
+    refrescar(); showToast('Longitud actualizada: '+nl.toFixed(2)+' m');
+  }
+
+  // ================= MOUSE =================
+  canvas.addEventListener('mousedown', e=>{
+    if(mode==='pan' || e.button===1){
+      e.preventDefault();
+      isPanning = true; panStart = { x:e.clientX-panX, y:e.clientY-panY };
+      mainWrap.classList.add('panning');
+      return;
+    }
+    if(mode==='draw'){
+      const v = hitTestVertex(e,false);
+      if(v){ draggingVertex = v; justDragged = false; mainWrap.classList.add('panning'); }
+      return;
+    }
+    if(mode==='edit'){
+      const v = hitTestVertex(e,true);
+      if(v && v.source==='shape'){ pushHistory(); draggingVertex = v; justDragged = false; mainWrap.classList.add('panning'); return; }
+      const m = hitTestMidHandle(e);
+      if(m){
+        const shape = getShapes().find(s=>s.id===m.shapeId);
+        if(!shape) return;
+        if(m.curved){ draggingCurve = { shapeId:shape.id, edgeIndex:m.edgeIndex }; justDragged = false; }
+        else {
+          pushHistory();
+          const pos = m.edgeIndex+1;
+          if(!shape.curves || shape.curves.length!==shape.points.length) shape.curves = shape.points.map(()=>null);
+          shape.points.splice(pos,0,getMouseMeter(e));
+          shape.curves.splice(pos,0,null);
+          draggingVertex = { source:'shape', shapeId:shape.id, index:pos };
+          justDragged = true;
+        }
+        mainWrap.classList.add('panning');
+      }
+    }
+  });
+  window.addEventListener('mousemove', e=>{
+    if(isPanning && panStart){ panX = e.clientX-panStart.x; panY = e.clientY-panStart.y; draw(); return; }
+    if(draggingVertex){
+      justDragged = true;
+      const m = getMouseMeter(e);
+      if(draggingVertex.source==='current') currentPoints[draggingVertex.index] = m;
+      else { const s = getShapes().find(x=>x.id===draggingVertex.shapeId); if(s) s.points[draggingVertex.index] = m; }
+      draw(); return;
+    }
+    if(draggingCurve){
+      if(!justDragged){ pushHistory(); justDragged = true; }
+      const s = getShapes().find(x=>x.id===draggingCurve.shapeId);
+      if(s){
+        const a = s.points[draggingCurve.edgeIndex], b = s.points[(draggingCurve.edgeIndex+1)%s.points.length];
+        const M = {x:(a.x+b.x)/2, y:(a.y+b.y)/2}, H = getMouseMeter(e);
+        s.curves[draggingCurve.edgeIndex] = { x:2*H.x-M.x, y:2*H.y-M.y };
+      }
+      draw(); return;
+    }
+    if(mode==='draw'){
+      const r = canvas.getBoundingClientRect();
+      mouseMeter = (e.clientX>=r.left && e.clientX<=r.right && e.clientY>=r.top && e.clientY<=r.bottom) ? getMouseMeter(e) : null;
+      draw();
+    }
+  });
+  window.addEventListener('mouseup', ()=>{
+    isPanning = false; panStart = null;
+    mainWrap.classList.remove('panning');
+    if(draggingVertex || draggingCurve){ draggingVertex = null; draggingCurve = null; refrescar(); }
+  });
+
+  canvas.addEventListener('click', e=>{
+    if(justDragged){ justDragged = false; return; }
+    if(mode==='draw'){
+      const v = hitTestVertex(e,false);
+      if(v){ if(v.index===0 && currentPoints.length>=3) closeCurrentShape(); return; }
+      currentPoints.push(getMouseMeter(e));
+      updateButtons(); draw();
+      return;
+    }
+    if(mode==='edit'){
+      const v = hitTestVertex(e,true);
+      if((v && v.source==='shape') || hitTestMidHandle(e) || hitTestEdgeLabel(e)) return;
+      selectedId = hitTestShapeBody(e);
+      updateButtons(); draw();
+    }
+  });
+
+  canvas.addEventListener('dblclick', e=>{
+    e.preventDefault();
+    if(mode==='edit'){
+      const mh = hitTestMidHandle(e);
+      if(mh && mh.curved){ toggleEdgeCurve(mh.shapeId, mh.edgeIndex); return; }
+      const lh = hitTestEdgeLine(e);
+      if(lh){ toggleEdgeCurve(lh.shapeId, lh.edgeIndex); return; }
+    }
+    const eh = hitTestEdgeLabel(e);
+    if(eh && ((eh.source==='current' && mode==='draw') || (eh.source==='shape' && mode==='edit'))){ editEdgeLength(eh); return; }
+    if(mode==='draw' && currentPoints.length>=3) closeCurrentShape();
+  });
+
+  canvas.addEventListener('contextmenu', e=>{
+    e.preventDefault();
+    if(mode==='edit'){
+      const v = hitTestVertex(e,true);
+      if(v && v.source==='shape') deleteVertexConfirm(v.shapeId, v.index);
+    }
+    if(mode==='draw'){
+      const v = hitTestVertex(e,false);
+      if(v && currentPoints.length>1){ currentPoints.splice(v.index,1); updateButtons(); draw(); }
+    }
+  });
+
+  canvas.addEventListener('wheel', e=>{
+    e.preventDefault();
+    const {x,y} = evtXY(e);
+    zoomEn(x, y, e.deltaY < 0 ? 1.1 : 0.9);
+  }, {passive:false});
+
+  function zoomEn(sx, sy, factor){
+    const before = screenToMeter(sx,sy);
+    pxPerMeter = Math.min(400, Math.max(6, pxPerMeter*factor));
+    const after = meterToScreen(before.x,before.y);
+    panX += sx-after.x; panY += sy-after.y;
+    draw();
+  }
+
+  // Teclado: solo actúa si no estás escribiendo en otro campo de tu proyecto
+  document.addEventListener('keydown', e=>{
+    if(modalBackdrop.style.display==='flex') return;
+    if(!raiz.offsetParent) return;               // módulo de Planos no visible
+    const ae = document.activeElement || {};
+    if(/INPUT|TEXTAREA|SELECT/.test(ae.tagName||'') || ae.isContentEditable) return;
+    if(e.key==='Escape') cancelCurrent();
+    if(e.key==='Delete' && selectedId && !currentPoints.length){ e.preventDefault(); deleteShape(selectedId); }
+    if(e.key==='Enter' && currentPoints.length>=3){ e.preventDefault(); closeCurrentShape(); }
+    if((e.ctrlKey||e.metaKey) && !e.shiftKey && e.key.toLowerCase()==='z'){ e.preventDefault(); currentPoints.length ? undoPoint() : undo(); }
+    if((e.ctrlKey||e.metaKey) && (e.key.toLowerCase()==='y' || (e.shiftKey && e.key.toLowerCase()==='z'))){ e.preventDefault(); redo(); }
+  });
+
+  async function closeCurrentShape(){
+    if(currentPoints.length < 3) return;
+    const plano = getCurrentPlano();
+    const num = plano.shapeCounter+1;
+    const name = ((await sgPrompt('Nombre para esta área:', 'Área '+num)) || ('Área '+num)).trim();
+    pushHistory();
+    plano.shapeCounter = num;
+    plano.shapes.push({
+      id:'shape_'+Date.now()+'_'+num, name,
+      color: PALETTE[plano.shapes.length % PALETTE.length],
+      points: currentPoints.slice(), curves: currentPoints.map(()=>null)
+    });
+    currentPoints = []; mouseMeter = null;
+    raiz.classList.remove('croquis-falta');
+    refrescar(); showToast('Área agregada: '+name);
+  }
+  function cancelCurrent(){ if(!currentPoints.length) return; currentPoints = []; mouseMeter = null; updateButtons(); draw(); }
+  function undoPoint(){ if(!currentPoints.length) return; currentPoints.pop(); updateButtons(); draw(); }
+
+  // ================= TÁCTIL =================
+  let toque = null;
+  const pt = t => { const r = canvas.getBoundingClientRect(); return { x:t.clientX-r.left, y:t.clientY-r.top }; };
+  canvas.addEventListener('touchstart', e=>{
+    if(e.touches.length===2){
+      e.preventDefault();
+      const a = pt(e.touches[0]), b = pt(e.touches[1]);
+      toque = { tipo:'pellizco', dist:Math.hypot(a.x-b.x,a.y-b.y), cx:(a.x+b.x)/2, cy:(a.y+b.y)/2 };
+    } else if(e.touches.length===1 && mode==='pan'){
+      e.preventDefault();
+      const p = pt(e.touches[0]);
+      toque = { tipo:'arrastre', x:p.x, y:p.y };
+      mainWrap.classList.add('panning');
+    }
+  }, {passive:false});
+  canvas.addEventListener('touchmove', e=>{
+    if(!toque) return;
+    e.preventDefault();
+    if(toque.tipo==='pellizco' && e.touches.length===2){
+      const a = pt(e.touches[0]), b = pt(e.touches[1]);
+      const d = Math.hypot(a.x-b.x,a.y-b.y), cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
+      const antes = screenToMeter(toque.cx, toque.cy);
+      pxPerMeter = Math.min(400, Math.max(6, pxPerMeter*(d/(toque.dist||d))));
+      panX = cx-antes.x*pxPerMeter; panY = cy-antes.y*pxPerMeter;
+      Object.assign(toque, {dist:d, cx, cy});
+      draw();
+    } else if(toque.tipo==='arrastre' && e.touches.length===1){
+      const p = pt(e.touches[0]);
+      panX += p.x-toque.x; panY += p.y-toque.y;
+      toque.x = p.x; toque.y = p.y;
+      draw();
+    }
+  }, {passive:false});
+  const finToque = e => { if(!e.touches.length){ toque = null; mainWrap.classList.remove('panning'); } };
+  canvas.addEventListener('touchend', finToque);
+  canvas.addEventListener('touchcancel', finToque);
+
+  // ================= BOTONES =================
+  function setMode(m){
+    mode = m;
+    ['Draw','Edit','Pan'].forEach(k => document.getElementById('btnMode'+k).classList.toggle('active-mode', m===k.toLowerCase()));
+    mainWrap.classList.toggle('pan-mode', m==='pan');
+    canvas.style.cursor = m==='edit' ? 'pointer' : '';
+    draw();
+  }
+  document.getElementById('btnModeDraw').onclick = ()=>setMode('draw');
+  document.getElementById('btnModeEdit').onclick = ()=>setMode('edit');
+  document.getElementById('btnModePan').onclick  = ()=>setMode('pan');
+  document.getElementById('btnClose').onclick  = closeCurrentShape;
+  document.getElementById('btnCancel').onclick = cancelCurrent;
+  document.getElementById('btnUndoGlobal').onclick = ()=>{ currentPoints.length ? undoPoint() : undo(); };
+  document.getElementById('btnRedoGlobal').onclick = redo;
+  document.getElementById('btnZoomIn').onclick  = ()=>{ const r = mainWrap.getBoundingClientRect(); zoomEn(r.width/2, r.height/2, 1.2); };
+  document.getElementById('btnZoomOut').onclick = ()=>{ const r = mainWrap.getBoundingClientRect(); zoomEn(r.width/2, r.height/2, 0.8); };
+  document.getElementById('btnResetView').onclick = ()=>{ centerView(); draw(); };
+  document.getElementById('btnDeleteSel').onclick = ()=>{ if(selectedId) deleteShape(selectedId); };
+  document.getElementById('btnClearAll').onclick = async ()=>{
+    if(!getShapes().length){ showToast('No hay áreas para borrar'); return; }
+    if(!(await sgConfirm('¿Borrar TODAS las áreas del croquis?'))) return;
+    pushHistory();
+    setShapes([]); selectedId = null;
+    refrescar(); showToast('Se borraron todas las áreas');
+  };
+
+  // ================= INICIO =================
+  const inicial = makePlano('Plano 1');
+  planos = [inicial]; currentPlanoId = inicial.id;
+  centerView();
+  resizeCanvas();
+  refrescar();
+
+  // ================= API PARA TU OTRO PROYECTO =================
+  //  croquisAPI.areaTotal()        → m² totales del croquis actual
+  //  croquisAPI.areas()            → cantidad de áreas cerradas
+  //  croquisAPI.detalle()          → lista de áreas con área, perímetro y lados
+  //  croquisAPI.imagen()           → PNG (dataURL) del croquis ajustado al lienzo
+  //  croquisAPI.exportar()         → texto JSON para guardar el croquis
+  //  croquisAPI.importar(json)     → vuelve a cargar un croquis guardado
+  //  croquisAPI.limpiar()          → deja el croquis en blanco
+  //  Evento: el div #croquisWrap dispara 'croquis:cambio' cada vez que cambia
+  function limpiarHistorial(){ undoStack = []; redoStack = []; updateUndoRedoButtons(); }
+  window.croquisAPI = {
+    areaTotal,
+    areas(){ return getShapes().length; },
+    trazando(){ return currentPoints.length; },
+    detalle(){
+      return getShapes().map(s=>({
+        nombre: s.name,
+        area: +shapeArea(s).toFixed(2),
+        perimetro: +shapePerimeter(s).toFixed(2),
+        lados: s.points.map((a,i)=>{
+          const b = s.points[(i+1)%s.points.length], c = s.curves ? s.curves[i] : null;
+          return { longitud: +curveEdgeLength(a,b,c).toFixed(2), orientacion: cardinal(bearingDeg(a,b)), curvo: !!c };
+        })
+      }));
+    },
+    exportar(){ return JSON.stringify(getCurrentPlano()); },
+    importar(json){
+      const d = typeof json === 'string' ? JSON.parse(json) : json;
+      const p = makePlano(d.name || 'Plano 1');
+      p.northAngle = d.northAngle || 0;
+      p.shapes = (d.shapes || []).map(s=>({ ...s, curves: Array.isArray(s.curves) && s.curves.length===s.points.length ? s.curves : s.points.map(()=>null) }));
+      p.shapeCounter = d.shapeCounter || p.shapes.length;
+      planos = [p]; currentPlanoId = p.id;
+      selectedId = null; currentPoints = [];
+      limpiarHistorial(); centerView(); refrescar();
+    },
+    limpiar(){
+      const p = makePlano('Plano 1');
+      planos = [p]; currentPlanoId = p.id;
+      selectedId = null; currentPoints = [];
+      limpiarHistorial(); centerView(); refrescar();
+    },
+    imagen(){
+      const plano = getCurrentPlano(), r = mainWrap.getBoundingClientRect();
+      if(!plano || !r.width || !r.height) return null;
+      const prev = { px:pxPerMeter, panX, panY, sel:selectedId, pts:currentPoints };
+      selectedId = null; currentPoints = [];
+      const pts = [];
+      plano.shapes.forEach(s => flattenShape(s.points, s.curves).forEach(p=>pts.push(p)));
+      if(pts.length){
+        const xs = pts.map(p=>p.x), ys = pts.map(p=>p.y);
+        const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+        pxPerMeter = Math.min(400, Math.max(6, Math.min((r.width-140)/Math.max(maxX-minX,1), (r.height-110)/Math.max(maxY-minY,1))));
+        panX = r.width/2 - ((minX+maxX)/2)*pxPerMeter;
+        panY = r.height/2 - ((minY+maxY)/2)*pxPerMeter;
+      }
+      draw();
+      const url = canvas.toDataURL('image/png');
+      pxPerMeter = prev.px; panX = prev.panX; panY = prev.panY; selectedId = prev.sel; currentPoints = prev.pts;
+      draw();
+      return url;
+    },
+    marcarFalta(si){ raiz.classList.toggle('croquis-falta', !!si); }
+  };
+})();
 </script>
 </body>
 </html>
